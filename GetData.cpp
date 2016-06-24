@@ -96,7 +96,7 @@ int GetNextChunk(bool bSepLibrary, fstream& file, fstream& file2, ReadItem_t* Re
 		//header
 		p = IdentifyHeaderBoundary(header);
 		ReadArr[iCount].header = new char[p + 1]; ReadArr[iCount].header[p] = '\0';
-		strncpy(ReadArr[iCount].header, header.c_str(), p);
+		strncpy(ReadArr[iCount].header, header.c_str() + 1, p);
 
 		//sequence
 		Convert2Cap(seq);
@@ -115,7 +115,7 @@ int GetNextChunk(bool bSepLibrary, fstream& file, fstream& file2, ReadItem_t* Re
 		//header
 		p = IdentifyHeaderBoundary(header);
 		ReadArr[iCount].header = new char[p + 1]; ReadArr[iCount].header[p] = '\0';
-		strncpy(ReadArr[iCount].header, header.c_str(), p);
+		strncpy(ReadArr[iCount].header, header.c_str() + 1, p);
 		//sequence
 		Convert2Cap(seq);
 		ReadArr[iCount].rlen = len = (int)seq.length();
