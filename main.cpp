@@ -79,13 +79,8 @@ int main(int argc, char* argv[])
 			parameter = argv[i];
 
 			if (parameter == "-i") IndexFileName = argv[++i];
-			else if (parameter == "-f")
-			{
-				ReadFileName = argv[++i];
-				FastQFormat = false;
-			}
-			else if (parameter == "-q") ReadFileName = argv[++i];
-			else if (parameter == "-f2" || parameter =="-q2") ReadFileName2 = argv[++i];
+			else if (parameter == "-f" || parameter == "-q") ReadFileName = argv[++i];
+			else if (parameter == "-f2" || parameter == "-q2") ReadFileName2 = argv[++i];
 			else if (parameter == "-t")
 			{
 				if ((iThreadNum = atoi(argv[++i])) > 16)
@@ -115,8 +110,9 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "Kart-RNA v%s\n", VersionStr);
 			fprintf(stderr, "Usage: %s aln [-i IndexFile Prefix] -f|-q ReadFile [-f2|-q2 ReadFile2] > out.sam\n\n", argv[0]);
 			fprintf(stderr, "Options: -t INT\t	number of threads [16]\n");
-			fprintf(stderr, "         -f|-f2\t	reads are in the FASTA format\n");
-			fprintf(stderr, "         -q|-q2\t	reads are in the FASTQ format\n");
+			fprintf(stderr, "         -f            files with #1 mates reads\n");
+			fprintf(stderr, "         -f2           files with #2 mates reads\n");
+			fprintf(stderr, "         -m            output multiple alignments\n");
 			fprintf(stderr, "         -p	\t	paired-end reads are interlaced in the same file\n");
 			fprintf(stderr, "\n");
 			exit(0);

@@ -576,12 +576,7 @@ void Mapping()
 
 	if(iTotalReadNum > 0)
 	{
-		if (bPairEnd) fprintf(stderr, "\t# of total mapped sequences = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
+		if (bPairEnd) fprintf(stderr, "\t# of total mapped sequences = %d (sensitivity = %.2f%%)\n\t# of paired sequences = %d (%.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0, iPaired, (int)(10000 * (1.0*iPaired / iTotalReadNum) + 0.5) / 100.0);
 		else fprintf(stderr, "\t# of total mapped sequences = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
 	}
-	//map<int64_t, int>::const_iterator iter, ChrIter;
-	//for (iter = ExonMap.begin(); iter != ExonMap.end(); iter++)
-	//{
-	//	printf("%ld %d\n", iter->first, iter->second);
-	//}
 }
