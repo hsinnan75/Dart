@@ -116,20 +116,6 @@ void ShowSeedInfo(vector<SeedPair_t>& SeedPairVec)
 	printf("\n\n"); fflush(stdout);
 }
 
-int ProcessSimpleSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >& cigar_vec)
-{
-	if (bDebugMode)
-	{
-		string frag1, frag2;
-		frag1.resize(sp.rLen); strncpy((char*)frag1.c_str(), seq + sp.rPos, sp.rLen);
-		frag2.resize(sp.gLen); strncpy((char*)frag2.c_str(), RefSequence + sp.gPos, sp.gLen);
-		//printf("SimplePair:\n%s #read[%d-%d]=%d\n%s #chr[%ld-%ld]=%d\nscore = %d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, sp.rLen), fflush(stdout);
-	}
-	cigar_vec.push_back(make_pair(sp.rLen, 'M'));
-
-	return sp.rLen;
-}
-
 int ProcessNormalSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >& cigar_vec)
 {
 	int score = 0;
@@ -234,16 +220,3 @@ int ProcessTailSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 	}
 	return score;
 }
-
-//bool CheckSimilarity(int len, string& frag1, string& frag2)
-//{
-//	int i, mis = 0;
-//
-//	for (i = 0; i < len; i++)
-//	{
-//		if (frag1[i] != frag2[i]) mis++;
-//	}
-//
-//	if (mis > (int)(len*0.25)) return false;
-//	else return true;
-//}

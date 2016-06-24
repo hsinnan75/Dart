@@ -191,10 +191,11 @@ bool CheckCandidateValidity(vector<SeedPair_t>& SeedPairVec)
 	return bValidity;
 }
 
-void IdentifySeedPairs(int rlen, uint8_t* EncodeSeq, vector<SeedPair_t>& SeedPairVec)
+vector<SeedPair_t> IdentifySeedPairs(int rlen, uint8_t* EncodeSeq)
 {
 	SeedPair_t SeedPair;
 	int i, pos, end_pos;
+	vector<SeedPair_t> SeedPairVec;
 	bwtSearchResult_t bwtSearchResult;
 
 	SeedPairVec.clear(); pos = 0, end_pos = rlen - 13;
@@ -222,6 +223,8 @@ void IdentifySeedPairs(int rlen, uint8_t* EncodeSeq, vector<SeedPair_t>& SeedPai
 		}
 	}
 	sort(SeedPairVec.begin(), SeedPairVec.end(), CompByGenomePos);
+
+	return SeedPairVec;
 }
 
 void MergeAdjacentSimplePairs(vector<SeedPair_t>& SeedVec)
@@ -248,19 +251,20 @@ void MergeAdjacentSimplePairs(vector<SeedPair_t>& SeedVec)
 	}
 }
 
-void GenerateAlignmentCandidate(int rlen, vector<SeedPair_t>& SeedPairVec, vector<AlignmentCandidate_t>& AlignmentVec)
+vector<AlignmentCandidate_t> GenerateAlignmentCandidate(int rlen, vector<SeedPair_t>& SeedPairVec)
 {
 	int64_t PosDiff;
 	int i, j, k, thr, num;
 	AlignmentCandidate_t AlignmentCandidate;
+	vector<AlignmentCandidate_t> AlignmentVec;
 
-	AlignmentVec.clear();
+	if ((num = SeedPairVec.size() == 0)) return AlignmentVec;
+	else AlignmentCandidate.PairedAlnCanIdx = -1;
 
-	if (SeedPairVec.size() == 0) return;
-	if ((thr = (int)(rlen*0.2)) > 50) thr = 50;
+	if ((thr = (int)(rlen*0.2)) > 30) thr = 30;
 
 	//if (bDebugMode) printf("\n\nRaw seeds:\n"), ShowSeedInfo(SeedPairVec);
-	AlignmentCandidate.PairedAlnCanIdx = -1; num = (int)SeedPairVec.size();
+	 num = (int)SeedPairVec.size();
 
 	i = 0; while (i < num && SeedPairVec[i].PosDiff < 0) i++;
 	for (; i < num;)
@@ -293,6 +297,7 @@ void GenerateAlignmentCandidate(int rlen, vector<SeedPair_t>& SeedPairVec, vecto
 		}
 		i = k;
 	}
+	return AlignmentVec;
 }
 
 void RemoveShortSeeds(vector<SeedPair_t>& SeedVec, int thr)
@@ -597,59 +602,6 @@ SeedPair_t ReseedingWithSpecificRegion(char* seq, int rBegin, int rEnd, int64_t 
 	return seed;
 }
 
-//SeedPair_t ReseedingFromEnd(bool bDir, char* seq, int rBegin, int rEnd, int64_t OriginalGenomicPos)
-//{
-//	SeedPair_t seed;
-//	char *frag1, *frag2;
-//	int i, j, rlen, glen, thr;
-//	map<int64_t, int>::iterator ChrIter;
-//	int64_t gPos, gStop, L_Boundary, R_Boundary, PosDiff, best_gPos;
-//
-//	if (bDebugMode) printf("Perform re-seeding with r[%d-%d]\n", rBegin, rEnd);
-//
-//	seed.rLen = seed.gLen = 0;
-//	rlen = rEnd - rBegin; thr = (rlen < 10 ? KmerSize: (int)(rlen*0.85)); frag1 = new char[rlen + 1]; strncpy(frag1, seq + rBegin, rlen);
-//
-//	ChrIter = ChrLocMap.lower_bound(OriginalGenomicPos);
-//	if (bDir) gStop = ChromosomeVec[ChrIter->second].FowardLocation + ChromosomeVec[ChrIter->second].len;
-//	else gStop = ChromosomeVec[ChrIter->second].FowardLocation;
-//
-//	for (i = 0; i < 500; i++) // range = 500K bp
-//	{
-//		if (bDir) // -->
-//		{
-//			L_Boundary = OriginalGenomicPos + (i * 1000);
-//			R_Boundary = L_Boundary + 1000 + rlen;
-//
-//			if (R_Boundary >= gStop) break;
-//		}
-//		else // <--
-//		{
-//			R_Boundary = OriginalGenomicPos - (i * 1000);
-//			L_Boundary = R_Boundary - 1000 - rlen;
-//
-//			if (L_Boundary < gStop) break;
-//		}
-//
-//		glen = R_Boundary - L_Boundary; frag2 = new char[glen + 1]; strncpy(frag2, RefSequence + L_Boundary, glen);
-//		if(bDebugMode) printf("Search area: %ld-%ld dist=%d\n", L_Boundary, R_Boundary, bDir ? R_Boundary - OriginalGenomicPos : OriginalGenomicPos - L_Boundary), fflush(stdout);
-//		seed = GenerateLongestSimplePairsFromFragmentPair(rlen, frag1, glen, frag2);
-//		if (seed.rLen >= thr)
-//		{
-//			seed.rPos += rBegin;
-//			seed.gPos += L_Boundary;
-//			seed.PosDiff = seed.gPos - seed.rPos;
-//			if (bDebugMode) printf("Re-seeding result: r[%d-%d] g[%ld-%ld], len=%d / %d\n", seed.rPos, seed.rPos + seed.rLen - 1, seed.gPos, seed.gPos + seed.gLen - 1, seed.rLen, thr), fflush(stdout);
-//			break;
-//		}
-//		else seed.rLen = seed.gLen = 0;
-//
-//		delete[] frag2;
-//	}
-//	delete[] frag1;
-//
-//	return seed;
-//}
 SeedPair_t ReseedingFromEnd(bool bDir, uint8_t* seq, int rBegin, int rEnd, int64_t OriginalGenomicPos)
 {
 	SeedPair_t seed;
@@ -693,33 +645,9 @@ SeedPair_t ReseedingFromEnd(bool bDir, uint8_t* seq, int rBegin, int rEnd, int64
 SeedPair_t IdentifyHeadingSeed(char* seq, uint8_t* EncodeSeq, int nGaps, int64_t gPos)
 {
 	SeedPair_t seed;
-	string frag1, frag2;
-	int64_t gCan, gLimit;
-	map<int64_t, int>::iterator ExonIter;
-
 	seed.rLen = seed.gLen = 0;
-	//ExonIter = ExonMap.upper_bound(gPos);
-	//if (ExonIter != ExonMap.end() && ExonIter->first > gPos) ExonIter--;
-	//if (ExonIter != ExonMap.end())
-	//{
-	//	gCan = ExonIter->first + ExonIter->second - nGaps;
-	//	if (bDebugMode) printf("1. Search exon map with %ld --> %ld\n", gPos, gCan);
-	//	if (ExonIter->first < gPos && ExonIter->second > 0)
-	//	{
-	//		frag1.resize(nGaps); strncpy((char*)frag1.c_str(), seq, nGaps);
-	//		frag2.resize(nGaps); strncpy((char*)frag2.c_str(), RefSequence + gCan, nGaps);
 
-	//		if (bDebugMode) printf("frag1=%s\nfrag2=%s\n", (char*)frag1.c_str(), (char*)frag2.c_str());
-	//		if (CalFragPairIdenticalBases(nGaps, (char*)frag1.c_str(), (char*)frag2.c_str()) > (nGaps >> 1))
-	//		{
-	//			seed.bAcceptorSite = false; seed.bSimple = true;
-	//			seed.rPos = 0;
-	//			seed.PosDiff = seed.gPos = gCan;
-	//			seed.rLen = seed.gLen = nGaps;
-	//		}
-	//	}
-	//}
-	if(/*seed.rLen == 0 && */nGaps >= 10) seed = ReseedingFromEnd(false, EncodeSeq, 0, nGaps, gPos);
+	if(nGaps >= 10) seed = ReseedingFromEnd(false, EncodeSeq, 0, nGaps, gPos);
 
 	return seed;
 }
@@ -728,28 +656,9 @@ SeedPair_t IdentifyTailingSeed(char* seq, uint8_t* EncodeSeq, int rPos_begin, in
 {
 	int nGaps;
 	SeedPair_t seed;
-	string frag1, frag2;
-	map<int64_t, int>::iterator ExonIter;
 
 	seed.rLen = seed.gLen = 0;
-	//ExonIter = ExonMap.upper_bound(gPos);
-	//if (ExonIter != ExonMap.end())
-	//{
-	//	//printf("Search exon map with %ld --> %ld\n", gPos, ExonIter->first);
-	//	nGaps = rPos_end - rPos_begin;
-	//	frag1.resize(nGaps); strncpy((char*)frag1.c_str(), seq + rPos_begin, nGaps);
-	//	frag2.resize(nGaps); strncpy((char*)frag2.c_str(), RefSequence + ExonIter->first, nGaps);
-	//	//printf("frag1=%s\nfrag2=%s\n", (char*)frag1.c_str(), (char*)frag2.c_str());
-	//	if (CalFragPairIdenticalBases(nGaps, (char*)frag1.c_str(), (char*)frag2.c_str()) > (nGaps>>1))
-	//	{
-	//		seed.bAcceptorSite = seed.bSimple = true;
-	//		seed.rPos = rPos_begin;
-	//		seed.gPos = ExonIter->first;
-	//		seed.PosDiff = seed.gPos - seed.rPos;
-	//		seed.rLen = seed.gLen = nGaps;
-	//	}
-	//}
-	if(/*seed.rLen == 0 && */rPos_end - rPos_begin >= 10) seed = ReseedingFromEnd(true, EncodeSeq, rPos_begin, rPos_end, gPos);
+	if(rPos_end - rPos_begin >= 10) seed = ReseedingFromEnd(true, EncodeSeq, rPos_begin, rPos_end, gPos);
 
 	return seed;
 }
@@ -1204,27 +1113,26 @@ void UpdateMyExonMap(map<int64_t, int>& MyExonMap, vector<SeedPair_t>& SeedPairV
 	}
 }
 
-MappingReport_t GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
+void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
 {
 	Coordinate_t coor;
-	MappingReport_t report;
-	int i, j, k, g, num, score;
+	int i, j, k, g, num;
 	map<int64_t, int> MyExonMap;
 	vector<pair<int, char> > cigar_vec;
 	map<int64_t, int>::iterator iter, ExonMapIter;
 
-	if (bDebugMode) printf("\n\nGenerate alignment for read %s (%d cans)\n", read.header + 1, (int)AlignmentVec.size()), fflush(stdout);
-	k = -1; report.score = report.sub_score = 0;
-	if (AlignmentVec.size() > 0)
+	if (bDebugMode) printf("\n\nGenerate alignment for read %s (%d cans)\n", read.header, (int)AlignmentVec.size()), fflush(stdout);
+	
+	read.score = read.iBestAlnCanIdx = 0;
+	if ((read.CanNum = (int)AlignmentVec.size()) > 0)
 	{
+		read.AlnReportArr = new AlignmentReport_t[read.CanNum];
 		for (i = 0; i != (int)AlignmentVec.size(); i++)
 		{
+			read.AlnReportArr[i].AlnScore = 0;
+			read.AlnReportArr[i].PairedAlnCanIdx = AlignmentVec[i].PairedAlnCanIdx;
+
 			if (AlignmentVec[i].Score == 0) continue;
-			//else if (k != -1 && AlignmentVec[i].Score == AlignmentVec[k].Score)
-			//{
-			//	if (bDebugMode) printf("candidate#%d (score=%d) could be a repeat!\n", i + 1, AlignmentVec[i].Score);
-			//	continue;
-			//}
 			if (bDebugMode)
 			{
 				printf("Original seeds\n");
@@ -1240,77 +1148,58 @@ MappingReport_t GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<Align
 			//printf("After CheckSpliceJunction\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			IdentifyNormalPairs(read.rlen, read.seq, AlignmentVec[i].SeedVec); // fill missing framgment pairs (normal pairs) between simple pairs
 			//printf("After IdentifyNormalPairs\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
-			if (CheckCoordinateValidity(AlignmentVec[i].SeedVec) == false) continue;
-
-			score = 0; cigar_vec.clear(); num = (int)AlignmentVec[i].SeedVec.size();
 			if (bDebugMode)
 			{
-				printf("Process candidate#%d (Score = %d, SimplePair#=%d): \n", i + 1, AlignmentVec[i].Score, (int)AlignmentVec[i].SeedVec.size());
+				printf("Process candidate#%d (Score = %d, SegmentPair#=%d): \n", i + 1, AlignmentVec[i].Score, (int)AlignmentVec[i].SeedVec.size());
 				ShowSeedInfo(AlignmentVec[i].SeedVec);
 			}
-			if (num > 0 && AlignmentVec[i].SeedVec[0].rPos > 0) cigar_vec.push_back(make_pair(AlignmentVec[i].SeedVec[0].rPos, 'S'));
-			for (j = 0; j != num; j++)
+			if (CheckCoordinateValidity(AlignmentVec[i].SeedVec) == false) continue;
+
+			cigar_vec.clear();
+			for (num = (int)AlignmentVec[i].SeedVec.size(), j = 0; j != num; j++)
 			{
 				if (AlignmentVec[i].SeedVec[j].rLen == 0 && AlignmentVec[i].SeedVec[j].gLen == 0) continue;
 				else
 				{
 					if (j > 0 && (g = AlignmentVec[i].SeedVec[j].gPos - (AlignmentVec[i].SeedVec[j - 1].gPos + AlignmentVec[i].SeedVec[j - 1].gLen)) > 0) cigar_vec.push_back(make_pair(g, 'N'));
 
-					if (AlignmentVec[i].SeedVec[j].bSimple) score += ProcessSimpleSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+					if (AlignmentVec[i].SeedVec[j].bSimple)
+					{
+						//if (bDebugMode) ShowFragmentPair(AlignmentVec[i].SeedVec[j]);
+						cigar_vec.push_back(make_pair(AlignmentVec[i].SeedVec[j].rLen, 'M'));
+						read.AlnReportArr[i].AlnScore += AlignmentVec[i].SeedVec[j].rLen;
+					}
 					else
 					{
 						//if (bDebugMode) printf("Check normal pair#%d: R[%d-%d]=%d G[%ld-%ld]=%d\n", j + 1, AlignmentVec[i].SeedVec[j].rPos, AlignmentVec[i].SeedVec[j].rPos + AlignmentVec[i].SeedVec[j].rLen - 1, AlignmentVec[i].SeedVec[j].rLen, AlignmentVec[i].SeedVec[j].gPos, AlignmentVec[i].SeedVec[j].gPos + AlignmentVec[i].SeedVec[j].gLen - 1, AlignmentVec[i].SeedVec[j].gLen), fflush(stdout);
-						if (j == 0) score += ProcessHeadSequencePair(read.seq, AlignmentVec[i].SeedVec[0], cigar_vec);
-						else if (j == num - 1) score += ProcessTailSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
-						else score += ProcessNormalSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+						if (j == 0) read.AlnReportArr[i].AlnScore += ProcessHeadSequencePair(read.seq, AlignmentVec[i].SeedVec[0], cigar_vec);
+						else if (j == num - 1) read.AlnReportArr[i].AlnScore += ProcessTailSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+						else read.AlnReportArr[i].AlnScore += ProcessNormalSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
 					}
 				}
 			}
 			if (num > 0 && (j = read.rlen - (AlignmentVec[i].SeedVec[num - 1].rPos + AlignmentVec[i].SeedVec[num - 1].rLen)) > 0) cigar_vec.push_back(make_pair(j, 'S'));
-			if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", score, read.rlen);
+			if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if (score > report.score)
+			read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec);
+			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
-				k = i; MyExonMap.clear();
-				if (report.score > report.sub_score) report.sub_score = report.score;
-				report.score = score;
-
-				report.Coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec);
-				if (bDebugMode)
-				{
-					printf("Final alignment\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
-					ShowSpliceJunctions(read.header + 1, report.Coor);
-				}
-				//UpdateMyExonMap(MyExonMap, AlignmentVec[i].SeedVec);
+				read.iBestAlnCanIdx = i;
+				read.sub_score = read.score;
+				read.score = read.AlnReportArr[i].AlnScore;
 			}
-			//else if (score == report.score)
-			//{
-			//	report.sub_score = report.score;
-			//	coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec);
-			//	if (ChromosomeVec[coor.ChromosomeIdx].len > ChromosomeVec[report.Coor.ChromosomeIdx].len) report.Coor = coor;
-
-			//	if (bDebugMode)
-			//	{
-			//		printf("Final alignment\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
-			//		ShowSpliceJunctions(read.header + 1, coor);
-			//	}
-			////	UpdateMyExonMap(MyExonMap, AlignmentVec[i].SeedVec);
-			//}
+			else if (read.AlnReportArr[i].AlnScore == read.score)
+			{
+				read.sub_score = read.score;
+				if (!bMultiHit && ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].len > ChromosomeVec[read.AlnReportArr[read.iBestAlnCanIdx].coor.ChromosomeIdx].len) read.iBestAlnCanIdx = i;
+			}
 		}
 	}
-	//if (MyExonMap.size() > 0)
-	//{
-	//	pthread_mutex_lock(&ExonLoc);
-	//	for (iter = MyExonMap.begin(); iter != MyExonMap.end(); iter++)
-	//	{
-	//		if (bDebugMode) printf("Add exon: %ld, len=%d\n", iter->first, iter->second);
-	//		ExonMapIter = ExonMap.find(iter->first);
-	//		if (ExonMapIter == ExonMap.end()) ExonMap.insert(make_pair(iter->first, iter->second));
-	//		else if (ExonMapIter->second < iter->second) ExonMapIter->second = iter->second;
-	//	}
-	//	pthread_mutex_unlock(&ExonLoc);
-
-	//	MyExonMap.clear();
-	//}
-	return report;
+	else
+	{
+		read.CanNum = 1; read.iBestAlnCanIdx = 0;
+		read.AlnReportArr = new AlignmentReport_t[1];
+		read.AlnReportArr[0].AlnScore = 0;
+		read.AlnReportArr[0].PairedAlnCanIdx = -1;
+	}
 }

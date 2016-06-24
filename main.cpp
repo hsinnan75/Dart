@@ -3,8 +3,8 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 const char* VersionStr = "1.0.0";
-bool bDebugMode, bPairEnd, FastQFormat;
-int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize;
+bool bDebugMode, bPairEnd, FastQFormat, bMultiHit;
+int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, iInsertSize;
 char *RefSequence, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
 void ShowProgramUsage(const char* program)
@@ -16,22 +16,33 @@ void ShowProgramUsage(const char* program)
 	fprintf(stderr, "\n");
 }
 
-bool CheckReadFile(char* filename)
+bool CheckReadFile(char* filename, bool bFirst)
 {
-	FILE* f = fopen(filename, "r");
-
-	if (f == NULL) return false;
-	else return true;
-}
-
-bool CheckDataFormat(const char* fn)
-{
+	char ch;
 	fstream file;
-	string header;
 	bool bCheck = true;
+	string str, header, seq;
+	int iCount = 0, iBaseCount = 0;
 
-	file.open(fn, ios_base::in); getline(file, header);
-	if (header == "" || (FastQFormat && header[0] != '@') || (!FastQFormat && header[0] != '>')) bCheck = false;
+	file.open(filename, ios_base::in);
+	if (!file.is_open()) return false;
+	else
+	{
+		getline(file, header);
+		if (header == "") return false;
+		else
+		{
+			if (bFirst)
+			{
+				if (header[0] == '>') FastQFormat = false;
+				else FastQFormat = true;
+			}
+			else
+			{
+				if ((FastQFormat && header[0] != '@') || (!FastQFormat && header[0] != '>')) return false;
+			}
+		}
+	}
 	file.close();
 
 	return bCheck;
@@ -43,9 +54,11 @@ int main(int argc, char* argv[])
 	string parameter, str;
 
 	MaxGaps = 5;
+	iInsertSize = 700;
 	iThreadNum = 16;
 	bPairEnd = false;
 	bDebugMode = false;
+	bMultiHit = false;
 	MaxIntronSize = 500000;
 	FastQFormat = true; // fastq:true, fasta:false
 	RefSequence = IndexFileName = ReadFileName = ReadFileName2 = SamFileName = NULL;
@@ -83,6 +96,7 @@ int main(int argc, char* argv[])
 			}
 			else if (parameter == "-o") SamFileName = argv[++i];
 			else if (parameter == "-pair" || parameter == "-p") bPairEnd = true;
+			else if (parameter == "-m") bMultiHit = true;
 			else if (parameter == "-intron")
 			{
 				if ((MaxIntronSize = atoi(argv[++i])) < 100000) MaxIntronSize = 100000;
@@ -107,20 +121,8 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "\n");
 			exit(0);
 		}
-		if (CheckReadFile(ReadFileName) == false) fprintf(stderr, "Cannot open the read file: %s\n", ReadFileName), exit(0);
-		if (ReadFileName2 != NULL && CheckReadFile(ReadFileName2) == false) fprintf(stderr, "Cannot open the read file: %s\n", ReadFileName2), exit(0);
-
-		if (CheckDataFormat(ReadFileName) == false)
-		{
-			fprintf(stderr, "%s is not a %s file, please check again.\n", ReadFileName, (FastQFormat ? "fastq" : "fasta"));
-			exit(0);
-		}
-		if (ReadFileName2 != NULL && CheckDataFormat(ReadFileName2) == false)
-		{
-			fprintf(stderr, "%s is not a %s file, please check again.\n", ReadFileName2, (FastQFormat ? "fastq" : "fasta"));
-			exit(0);
-		}
-
+		if (CheckReadFile(ReadFileName, true) == false) fprintf(stderr, "Cannot open the read file: %s\n", ReadFileName), exit(0);
+		if (ReadFileName2 != NULL && CheckReadFile(ReadFileName2, false) == false) fprintf(stderr, "Read file: %s cannot be accessed or with incompatible format!\n", ReadFileName2), exit(0);
 
 		if (CheckBWAIndexFiles(IndexFileName)) RefIdx = bwa_idx_load(IndexFileName);
 		else RefIdx = 0;

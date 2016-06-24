@@ -6,9 +6,9 @@
 FILE *output = stdout;
 time_t StartProcessTime;
 bool bSepLibrary = false;
-int iTotalReadNum = 0, iUnMapped = 0;
 fstream ReadFileHandler1, ReadFileHandler2;
 static pthread_mutex_t LibraryLock, OutputLock;
+int iTotalReadNum = 0, iUnMapped = 0, iPaired = 0;
 
 void ShowAlignmentCandidateInfo(char* header, vector<AlignmentCandidate_t>& AlignmentVec)
 {
@@ -34,131 +34,243 @@ bool CompByCandidateScore(const AlignmentCandidate_t& p1, const AlignmentCandida
 	else return p1.Score > p2.Score;
 }
 
-void SetPairedAlignmentFlag(MappingReport_t& report1, MappingReport_t& report2)
+void SetSingleAlignmentFlag(ReadItem_t& read)
 {
-	report1.iFrag = 0x41; // read1 is the first read in a pair
-	report2.iFrag = 0x81; // read2 is the second read in a pair
+	int i;
 
-	if (report1.bPaired) // the reads are mapped in a proper pair
+	if (read.score > read.sub_score || bMultiHit == false) // unique mapping or bMultiHit=false
 	{
-		report1.iFrag |= 0x2;
-		report2.iFrag |= 0x2;
-
-		report1.iFrag |= (report1.Coor.bDir ? 0x20 : 0x10);
-		report2.iFrag |= (report2.Coor.bDir ? 0x20 : 0x10);
+		i = read.iBestAlnCanIdx;
+		if (read.AlnReportArr[i].coor.bDir == false) read.AlnReportArr[i].iFrag = 0x10;
+		else read.AlnReportArr[i].iFrag = 0;
+	}
+	else if (read.score > 0)
+	{
+		for (i = 0; i < read.CanNum; i++)
+		{
+			if (read.AlnReportArr[i].AlnScore > 0)
+			{
+				if (read.AlnReportArr[i].coor.bDir == false) read.AlnReportArr[i].iFrag = 0x10;
+				else read.AlnReportArr[i].iFrag = 0;
+			}
+		}
 	}
 	else
 	{
-		if (report1.score == 0) // read1 is unmapped
-		{
-			report1.iFrag |= 0x4; // segment unmapped
-			report2.iFrag |= 0x8; // next segment unmapped
+		read.AlnReportArr[0].iFrag = 0x4;
+	}
+}
 
-			if (report2.score > 0)
+void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
+{
+	int i, j;
+
+	//printf("read1:[%d, %d]:#%d, read2:[%d, %d] #%d\n", read1.score, read1.sub_score, read1.iBestAlnCanIdx, read2.score, read2.sub_score, read2.iBestAlnCanIdx); fflush(stdout);
+	if (read1.score > read1.sub_score && read2.score > read2.sub_score) // unique mapping
+	{
+		i = read1.iBestAlnCanIdx;
+		read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
+
+		j = read2.iBestAlnCanIdx;
+		read2.AlnReportArr[j].iFrag = 0x81; // read2 is the second read in a pair
+
+		if (j == read1.AlnReportArr[i].PairedAlnCanIdx) // reads are mapped in a proper pair
+		{
+			read1.AlnReportArr[i].iFrag |= 0x2;
+			read2.AlnReportArr[j].iFrag |= 0x2;
+		}
+		read1.AlnReportArr[i].iFrag |= (read1.AlnReportArr[i].coor.bDir ? 0x20 : 0x10);
+		read2.AlnReportArr[j].iFrag |= (read2.AlnReportArr[j].coor.bDir ? 0x20 : 0x10);
+	}
+	else
+	{
+		if (read1.score > read1.sub_score || bMultiHit == false) // unique mapping or bMultiHit=false
+		{
+			i = read1.iBestAlnCanIdx;
+			read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
+			read1.AlnReportArr[i].iFrag |= (read1.AlnReportArr[i].coor.bDir ? 0x20 : 0x10);
+			if ((j = read1.AlnReportArr[i].PairedAlnCanIdx) != -1 && read2.AlnReportArr[j].AlnScore > 0) read1.AlnReportArr[i].iFrag |= 0x2;// reads are mapped in a proper pair
+			else read1.AlnReportArr[i].iFrag |= 0x8; // next segment unmapped
+		}
+		else if (read1.score > 0)
+		{
+			for (i = 0; i < read1.CanNum; i++)
 			{
-				report1.iFrag |= (report2.Coor.bDir ? 0x20 : 0x10);
-				report2.iFrag |= (report2.Coor.bDir ? 0x10 : 0x20);
+				if (read1.AlnReportArr[i].AlnScore > 0)
+				{
+					read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
+					read1.AlnReportArr[i].iFrag |= (read1.AlnReportArr[i].coor.bDir ? 0x20 : 0x10);
+
+					if ((j = read1.AlnReportArr[i].PairedAlnCanIdx) != -1 && read2.AlnReportArr[j].AlnScore > 0) read1.AlnReportArr[i].iFrag |= 0x2;// reads are mapped in a proper pair
+					else read1.AlnReportArr[i].iFrag |= 0x8; // next segment unmapped
+				}
 			}
 		}
 		else
 		{
-			report1.iFrag |= (report1.Coor.bDir ? 0x20 : 0x10);
-			report2.iFrag |= (report1.Coor.bDir ? 0x10 : 0x20);
+			read1.AlnReportArr[0].iFrag = 0x41; // read1 is the first read in a pair
+			read1.AlnReportArr[0].iFrag |= 0x4;
+
+			if (read2.score == 0) read1.AlnReportArr[0].iFrag |= 0x8; // next segment unmapped
+			else read1.AlnReportArr[0].iFrag |= (read2.AlnReportArr[read2.iBestAlnCanIdx].coor.bDir ? 0x10 : 0x20);
 		}
 
-		if (report2.score == 0) // read2 is unmapped
+		if (read2.score > read2.sub_score || bMultiHit == false) // unique mapping or bMultiHit=false
 		{
-			report1.iFrag |= 0x8; // next segment unmapped
-			report2.iFrag |= 0x4; // segment unmapped
+			j = read2.iBestAlnCanIdx;
+			read2.AlnReportArr[j].iFrag = 0x81; // read2 is the second read in a pair
+			read2.AlnReportArr[j].iFrag |= (read2.AlnReportArr[j].coor.bDir ? 0x20 : 0x10);
 
-			if (report1.score > 0)
+			if ((i = read2.AlnReportArr[j].PairedAlnCanIdx) != -1 && read1.AlnReportArr[i].AlnScore > 0) read2.AlnReportArr[j].iFrag |= 0x2;// reads are mapped in a proper pair
+			else read2.AlnReportArr[j].iFrag |= 0x8; // next segment unmapped
+		}
+		else if (read2.score > 0)
+		{
+			for (j = 0; j < read2.CanNum; j++)
 			{
-				report1.iFrag |= (report1.Coor.bDir ? 0x10 : 0x20);
-				report2.iFrag |= (report1.Coor.bDir ? 0x20 : 0x10);
+				if (read2.AlnReportArr[j].AlnScore > 0)
+				{
+					read2.AlnReportArr[j].iFrag = 0x81; // read2 is the second read in a pair
+					read2.AlnReportArr[j].iFrag |= (read2.AlnReportArr[j].coor.bDir ? 0x20 : 0x10);
+
+					if ((i = read2.AlnReportArr[j].PairedAlnCanIdx) != -1 && read1.AlnReportArr[i].AlnScore > 0) read2.AlnReportArr[j].iFrag |= 0x2;// reads are mapped in a proper pair
+					else read2.AlnReportArr[j].iFrag |= 0x8; // next segment unmapped
+				}
 			}
 		}
 		else
 		{
-			report1.iFrag |= (report2.Coor.bDir ? 0x10 : 0x20);
-			report2.iFrag |= (report2.Coor.bDir ? 0x20 : 0x10);
+			read2.AlnReportArr[0].iFrag = 0x81; // read2 is the second read in a pair
+			read2.AlnReportArr[0].iFrag |= 0x4; // segment unmapped
+			if (read1.score == 0) read2.AlnReportArr[0].iFrag |= 0x8; // next segment unmapped
+			else read2.AlnReportArr[0].iFrag |= (read1.AlnReportArr[read1.iBestAlnCanIdx].coor.bDir ? 0x10 : 0x20);
 		}
 	}
 }
 
-void EvaluateMAPQ(int rlen, MappingReport_t& report)
+void EvaluateMAPQ(ReadItem_t& read)
 {
 	float f;
 
-	if (report.score == 0 || report.score == report.sub_score) report.mapq = 0;
+	if (read.score == 0 || read.score == read.sub_score) read.mapq = 0;
 	else
 	{
-		if (report.sub_score == 0) report.mapq = 255;
+		if (read.sub_score == 0) read.mapq = 255;
 		else
 		{
-			report.mapq = (int)(MAPQ_COEF * (1 - (float)(report.score - report.sub_score)/10.0)*log(report.score) + 0.4999);
-			if (report.mapq > 255) report.mapq = 255;
-			else if(report.mapq < 0) report.mapq = 0;
+			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / 10.0)*log(read.score) + 0.4999);
+			if (read.mapq > 255) read.mapq = 255;
 
-			f = 1.0*report.score / rlen;
-			report.mapq = (f < 0.95 ? (int)(report.mapq * f * f) : report.mapq);
+			f = 1.0*read.score / read.rlen;
+			read.mapq = (f < 0.95 ? (int)(read.mapq * f * f) : read.mapq);
 		}
 	}
 }
 
-void OutputPairedSamFile(ReadItem_t& read1, MappingReport_t& report1, ReadItem_t& read2, MappingReport_t& report2)
+void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 {
-	int i, j, dist, paired_idx;
+	char *seq, *rseq;
+	int i, j, dist = 0;
 
-	if (report1.score == 0)
+	if (read1.score == 0)
 	{
 		iUnMapped++;
-		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header + 1, report1.iFrag, read1.seq);
-		//if(report2.score == 0) fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header + 1, report1.iFrag, read1.seq);
-		//else fprintf(output, "%s\t%d\t%s\t%ld\t0\t*\t=\t%ld\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header + 1, report1.iFrag, ChromosomeVec[report2.Coor.ChromosomeIdx].name, report2.Coor.gPos, report2.Coor.gPos, read1.seq);
+		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header, read1.AlnReportArr[0].iFrag, read1.seq);
 	}
 	else
 	{
-		if (report1.bPaired)
+		seq = read1.seq; rseq = NULL;
+		for (i = read1.iBestAlnCanIdx; i < read1.CanNum; i++)
 		{
-			dist = (int)(report2.Coor.gPos - report1.Coor.gPos + (report1.Coor.bDir ? read2.rlen : 0 - read1.rlen));
-			fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header + 1, report1.iFrag, ChromosomeVec[report1.Coor.ChromosomeIdx].name, report1.Coor.gPos, report1.mapq, report1.Coor.CIGAR.c_str(), report2.Coor.gPos, dist, read1.seq, read1.rlen - report1.score, report1.score, report1.sub_score);
+			if (read1.AlnReportArr[i].AlnScore > 0)
+			{
+				if (read1.AlnReportArr[i].coor.bDir == false && rseq == NULL)
+				{
+					rseq = new char[read1.rlen + 1]; rseq[read1.rlen] = '\0';
+					GetComplementarySeq(read1.rlen, seq, rseq);
+				}
+				if ((j = read1.AlnReportArr[i].PairedAlnCanIdx) != -1)
+				{
+					dist = (int)(read2.AlnReportArr[j].coor.gPos - read1.AlnReportArr[i].coor.gPos + (read1.AlnReportArr[i].coor.bDir ? read2.rlen : 0 - read1.rlen));
+					if (i == read1.iBestAlnCanIdx) iPaired += 2;
+					fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), read2.AlnReportArr[j].coor.gPos, dist, (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
+				}
+				else fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
+			}
+			if (!bMultiHit) break;
 		}
-		else
+		if (rseq != NULL)
 		{
-			fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header + 1, report1.iFrag, ChromosomeVec[report1.Coor.ChromosomeIdx].name, report1.Coor.gPos, report1.mapq, report1.Coor.CIGAR.c_str(), read1.seq, read1.rlen - report1.score, report1.score, report1.sub_score);
+			delete[] rseq;
+			rseq = NULL;
 		}
 	}
-	if (report2.score == 0)
+
+	if (read2.score == 0)
 	{
 		iUnMapped++;
-		if (report1.score == 0) fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header + 1, report2.iFrag, read2.seq);
-		//if (report1.score == 0) fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header + 1, report2.iFrag, read2.seq);
-		//else fprintf(output, "%s\t%d\t%s\t%ld\t0\t*\t=\t%ld\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header + 1, report2.iFrag, ChromosomeVec[report1.Coor.ChromosomeIdx].name, report1.Coor.gPos, report1.Coor.gPos, read2.seq);
+		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header, read2.AlnReportArr[0].iFrag, read2.seq);
 	}
 	else
 	{
-		if (report2.bPaired)
+		rseq = read2.seq; seq = NULL;
+		for (j = read2.iBestAlnCanIdx; j < read2.CanNum; j++)
 		{
-			dist = 0 - dist;
-			fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header + 1, report2.iFrag, ChromosomeVec[report2.Coor.ChromosomeIdx].name, report2.Coor.gPos, report2.mapq, report2.Coor.CIGAR.c_str(), report1.Coor.gPos, dist, read2.seq, read2.rlen - report2.score, report2.score, report2.sub_score);
+			if (read2.AlnReportArr[j].AlnScore > 0)
+			{
+				if (read2.AlnReportArr[j].coor.bDir == true && seq == NULL)
+				{
+					seq = new char[read2.rlen + 1]; seq[read2.rlen] = '\0';
+					GetComplementarySeq(read2.rlen, rseq, seq);
+				}
+				if ((i = read2.AlnReportArr[j].PairedAlnCanIdx) != -1)
+				{
+					dist = 0 - ((int)(read2.AlnReportArr[j].coor.gPos - read1.AlnReportArr[i].coor.gPos + (read1.AlnReportArr[i].coor.bDir ? read2.rlen : 0 - read1.rlen)));
+					fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), read1.AlnReportArr[i].coor.gPos, dist, (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
+				}
+				else fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
+			}
+			if (!bMultiHit) break;
 		}
-		else
+		if (seq != NULL)
 		{
-			fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header + 1, report2.iFrag, ChromosomeVec[report2.Coor.ChromosomeIdx].name, report2.Coor.gPos, report2.mapq, report2.Coor.CIGAR.c_str(), read2.seq, read2.rlen - report2.score, report2.score, report2.sub_score);
+			delete[] seq;
+			seq = NULL;
 		}
 	}
 }
 
-void OutputSingledSamFile(ReadItem_t& read, MappingReport_t& report)
+void OutputSingledSamFile(ReadItem_t& read)
 {
-	if (report.score == 0)
+	if (read.score == 0)
 	{
 		iUnMapped++;
-		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read.header + 1, report.iFrag, read.seq);
+		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read.header, read.AlnReportArr[0].iFrag, read.seq);
 	}
 	else
 	{
-		fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read.header + 1, report.iFrag, ChromosomeVec[report.Coor.ChromosomeIdx].name, report.Coor.gPos, report.mapq, report.Coor.CIGAR.c_str(), read.seq, read.rlen - report.score, report.score, report.sub_score);
+		int i;
+		char *seq, *rseq;
+
+		seq = read.seq; rseq = NULL;
+		for (i = read.iBestAlnCanIdx; i < read.CanNum; i++)
+		{
+			if (read.AlnReportArr[i].AlnScore == read.score)
+			{
+				if (read.AlnReportArr[i].coor.bDir == false && rseq == NULL)
+				{
+					rseq = new char[read.rlen + 1]; rseq[read.rlen] = '\0';
+					GetComplementarySeq(read.rlen, seq, rseq);
+				}
+				fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), read.rlen - read.score, read.score, read.sub_score);
+				if (!bMultiHit) break;
+			}
+		}
+		if (rseq != NULL)
+		{
+			delete[] rseq;
+			rseq = NULL;
+		}
 	}
 }
 
@@ -196,100 +308,145 @@ void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
 
 bool CheckPairedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2)
 {
-	bool bPaired = false;
-	int64_t dist, min_dist;
-	int i, j, p, s, max_score, num1, num2;
+	int64_t dist;
+	bool bPairing = false;
+	int i, j, best_mate, s, num1, num2;
 
-	num1 = (int)AlignmentVec1.size(); num2 = (int)AlignmentVec2.size(); max_score = 0;
+	num1 = (int)AlignmentVec1.size(); num2 = (int)AlignmentVec2.size();
+
+	if (num1*num2 > 1000)
+	{
+		RemoveRedundantCandidates(AlignmentVec1);
+		RemoveRedundantCandidates(AlignmentVec2);
+	}
+
 	for (i = 0; i != num1; i++)
 	{
 		if (AlignmentVec1[i].Score == 0) continue;
 
-		min_dist = 100000;
-		for (p = -1, j = 0; j != num2; j++)
+		for (best_mate = -1, s = 0, j = 0; j != num2; j++)
 		{
-			if (AlignmentVec2[j].Score == 0) continue;
+			if (AlignmentVec2[j].Score == 0 || AlignmentVec2[j].PosDiff < AlignmentVec1[i].PosDiff) continue;
 
-			dist = abs(AlignmentVec2[j].PosDiff - AlignmentVec1[i].PosDiff);
-			//printf("#%d (s=%d) and #%d (s=%d), dist=%ld\n", i + 1, AlignmentVec1[i].Score, j + 1, AlignmentVec2[j].Score, dist);
-			if (dist < min_dist)
+			dist = AlignmentVec2[j].PosDiff - AlignmentVec1[i].PosDiff;
+			//printf("#%d (s=%d) and #%d (s=%d) (dist=%ld / %d)\n", i+1, AlignmentVec1[i].Score, j+1, AlignmentVec2[j].Score, dist, EstiDistance), fflush(stdout);
+			if (dist < iInsertSize)
 			{
-				min_dist = dist;
-				p = j;
+				if (AlignmentVec2[j].Score > s)
+				{
+					best_mate = j;
+					s = AlignmentVec2[j].Score;
+				}
+				else if (AlignmentVec2[j].Score == s) best_mate = -1;
 			}
 		}
-		if (p != -1)
+		if (s > 0 && best_mate != -1)
 		{
-			j = p;
-			s = AlignmentVec1[i].Score + AlignmentVec2[j].Score;
-			if(bDebugMode) printf("Can#%d (s=%d) and Can#%d (s=%d) are pairing\n", i + 1, AlignmentVec1[i].Score, j + 1, AlignmentVec2[j].Score);
-
-			if (AlignmentVec2[j].PairedAlnCanIdx == -1 || (AlignmentVec1[i].Score > AlignmentVec1[AlignmentVec2[j].PairedAlnCanIdx].Score))
+			j = best_mate;
+			if (AlignmentVec2[j].PairedAlnCanIdx == -1)
 			{
+				bPairing = true;
 				AlignmentVec1[i].PairedAlnCanIdx = j;
 				AlignmentVec2[j].PairedAlnCanIdx = i;
-
-				if (s > max_score) max_score = s;
+			}
+			else if (AlignmentVec1[i].Score > AlignmentVec1[AlignmentVec2[j].PairedAlnCanIdx].Score)
+			{
+				AlignmentVec1[AlignmentVec2[j].PairedAlnCanIdx].PairedAlnCanIdx = -1;
+				AlignmentVec1[i].PairedAlnCanIdx = j;
+				AlignmentVec2[j].PairedAlnCanIdx = i;
 			}
 		}
 	}
-	if (max_score > 0)
+	return bPairing;
+}
+
+void RemoveUnMatedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2)
+{
+	int i, j, num1, num2;
+
+	num1 = (int)AlignmentVec1.size(); num2 = (int)AlignmentVec2.size();
+
+	for (i = 0; i != num1; i++)
 	{
-		max_score = (int)(max_score*0.75);
+		if (AlignmentVec1[i].PairedAlnCanIdx == -1) AlignmentVec1[i].Score = 0;
+		else
+		{
+			j = AlignmentVec1[i].PairedAlnCanIdx;
+			AlignmentVec1[i].Score = AlignmentVec2[j].Score = AlignmentVec1[i].Score + AlignmentVec2[j].Score;
+		}
+	}
+	for (j = 0; j != num2; j++) if (AlignmentVec2[j].PairedAlnCanIdx == -1) AlignmentVec2[j].Score = 0;
+
+	if (bDebugMode)
+	{
 		for (i = 0; i != num1; i++)
 		{
-			if (AlignmentVec1[i].PairedAlnCanIdx == -1 || (AlignmentVec1[i].Score + AlignmentVec2[AlignmentVec1[i].PairedAlnCanIdx].Score < max_score)) AlignmentVec1[i].Score = 0;
+			if ((j = AlignmentVec1[i].PairedAlnCanIdx) != -1)
+				printf("#%d(s=%d) and #%d(s=%d) are pairing\n", i + 1, AlignmentVec1[i].Score, j + 1, AlignmentVec2[j].Score);
 		}
-		for (j = 0; j != num2; j++)
+	}
+}
+
+void CheckPairedFinalAlignments(ReadItem_t& read1, ReadItem_t& read2)
+{
+	bool bMated;
+	int64_t dist;
+	int i, j, best_mate, s;
+
+	//printf("BestIdx1=%d, BestIdx2=%d\n", read1.iBestAlnCanIdx + 1, read2.iBestAlnCanIdx + 1);
+	bMated = read1.AlnReportArr[read1.iBestAlnCanIdx].PairedAlnCanIdx == read2.iBestAlnCanIdx ? true : false;
+	if (!bMultiHit && bMated) return;
+	if (!bMated && read1.score > 0 && read2.score > 0) // identify mated pairs
+	{
+		for (s = 0, i = 0; i != read1.CanNum; i++)
 		{
-			if (AlignmentVec2[j].PairedAlnCanIdx == -1 || (AlignmentVec1[AlignmentVec2[j].PairedAlnCanIdx].Score + AlignmentVec2[j].Score < max_score)) AlignmentVec2[j].Score = 0;
+			if (read1.AlnReportArr[i].AlnScore > 0 && (j = read1.AlnReportArr[i].PairedAlnCanIdx) != -1 && read2.AlnReportArr[j].AlnScore > 0)
+			{
+				bMated = true;
+				if (s < read1.AlnReportArr[i].AlnScore + read2.AlnReportArr[j].AlnScore)
+				{
+					s = read1.AlnReportArr[i].AlnScore + read2.AlnReportArr[j].AlnScore;
+					read1.iBestAlnCanIdx = i; read1.score = read1.AlnReportArr[i].AlnScore;
+					read2.iBestAlnCanIdx = j; read2.score = read2.AlnReportArr[j].AlnScore;
+				}
+			}
 		}
-		bPaired = true;
 	}
-}
-
-void CheckPairingStatus(MappingReport_t& report1, vector<AlignmentCandidate_t>& AlignmentVec1, MappingReport_t& report2, vector<AlignmentCandidate_t>& AlignmentVec2)
-{
-	int i, j, dist, idx1, idx2;
-
-	if (report1.score > 0 && report2.score > 0 && report1.Coor.ChromosomeIdx == report2.Coor.ChromosomeIdx && (report2.Coor.gPos - report1.Coor.gPos) < 1000000)
+	if (bMated)
 	{
-		//printf("reads are paired aligned\n");
-		report1.bPaired = report2.bPaired = true;
+		for (i = 0; i != read1.CanNum; i++)
+		{
+			if (read1.AlnReportArr[i].AlnScore != read1.score || ((j = read1.AlnReportArr[i].PairedAlnCanIdx) != -1 && read2.AlnReportArr[j].AlnScore != read2.score))
+			{
+				read1.AlnReportArr[i].AlnScore = 0;
+				read1.AlnReportArr[i].PairedAlnCanIdx = -1;
+				continue;
+			}
+		}
 	}
-	else
+	else // remove all mated info
 	{
-		//printf("unpaired aligned --> %ld vs %ld\n", report1.Coor.gPos, report2.Coor.gPos);
-		report1.bPaired = report2.bPaired = true;
-	}
-}
-
-void RemovedUnPairedCandidates(vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2)
-{
-	int i, num;
-
-	for (num = (int)AlignmentVec1.size(), i = 0; i < num; i++)
-	{
-		if (AlignmentVec1[i].PairedAlnCanIdx != -1 && AlignmentVec2[AlignmentVec1[i].PairedAlnCanIdx].Score == 0)
-			AlignmentVec1[i].Score = 0;
-	}
-
-	for (num = (int)AlignmentVec2.size(), i = 0; i < num; i++)
-	{
-		if (AlignmentVec2[i].PairedAlnCanIdx != -1 && AlignmentVec1[AlignmentVec2[i].PairedAlnCanIdx].Score == 0)
-			AlignmentVec2[i].Score = 0;
+		for (i = 0; i != read1.CanNum; i++)
+		{
+			if (read1.AlnReportArr[i].PairedAlnCanIdx != -1) read1.AlnReportArr[i].PairedAlnCanIdx = -1;
+			if (read1.AlnReportArr[i].AlnScore > 0 && read1.AlnReportArr[i].AlnScore != read1.score) read1.AlnReportArr[i].AlnScore = 0;
+		}
+		for (j = 0; j != read2.CanNum; j++)
+		{
+			if (read2.AlnReportArr[j].PairedAlnCanIdx != -1) read2.AlnReportArr[j].PairedAlnCanIdx = -1;
+			if (read2.AlnReportArr[j].AlnScore > 0 && read2.AlnReportArr[j].AlnScore != read2.score) read2.AlnReportArr[j].AlnScore = 0;
+		}
 	}
 }
 
 void *ReadMapping(void *arg)
 {
 	ReadItem_t* ReadArr = NULL;
-	MappingReport_t* ReportArr = NULL;
 	int i, j, max_dist, ReadNum, EstDistance;
 	vector<SeedPair_t> SeedPairVec1, SeedPairVec2;
 	vector<AlignmentCandidate_t> AlignmentVec1, AlignmentVec2;
 
-	ReadArr = new ReadItem_t[ReadChunkSize];  ReportArr = new MappingReport_t[ReadChunkSize];
+	ReadArr = new ReadItem_t[ReadChunkSize];
 	while (true)
 	{
 		pthread_mutex_lock(&LibraryLock);
@@ -304,11 +461,11 @@ void *ReadMapping(void *arg)
 			{
 				if (bDebugMode) printf("Mapping paired reads#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
 
-				IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq, SeedPairVec1); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
-				GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1, AlignmentVec1);
+				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
+				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
 
-				IdentifySeedPairs(ReadArr[j].rlen, ReadArr[j].EncodeSeq, SeedPairVec2); //if (bDebugMode) ShowSeedInfo(SeedPairVec2);
-				GenerateAlignmentCandidate(ReadArr[j].rlen, SeedPairVec2, AlignmentVec2);
+				SeedPairVec2 = IdentifySeedPairs(ReadArr[j].rlen, ReadArr[j].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec2);
+				AlignmentVec2 = GenerateAlignmentCandidate(ReadArr[j].rlen, SeedPairVec2);
 
 				if (bDebugMode) ShowAlignmentCandidateInfo(ReadArr[i].header+1, AlignmentVec1), ShowAlignmentCandidateInfo(ReadArr[j].header+1, AlignmentVec2);
 				if (!CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2)) RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);
@@ -318,25 +475,16 @@ void *ReadMapping(void *arg)
 					ShowAlignmentCandidateInfo(ReadArr[i].header + 1, AlignmentVec1);
 					ShowAlignmentCandidateInfo(ReadArr[j].header + 1, AlignmentVec2);
 				}
-				ReportArr[i] = GenMappingReport(true,  ReadArr[i], AlignmentVec1);
-				ReportArr[j] = GenMappingReport(false, ReadArr[j], AlignmentVec2);
+				GenMappingReport(true,  ReadArr[i], AlignmentVec1);
+				GenMappingReport(false, ReadArr[j], AlignmentVec2);
 
-				CheckPairingStatus(ReportArr[i], AlignmentVec1, ReportArr[j], AlignmentVec2);
-				// reverse read sequence if it is reversely mapped
-				if (ReportArr[i].score > 0 && ReportArr[i].Coor.bDir == false)
-				{
-					string myseq = ReadArr[i].seq;
-					GetComplementarySeq(ReadArr[i].rlen, (char*)myseq.c_str(), ReadArr[i].seq);
-				}
-				if (ReportArr[j].score > 0 && ReportArr[j].Coor.bDir == true)
-				{
-					string myseq = ReadArr[j].seq;
-					GetComplementarySeq(ReadArr[j].rlen, (char*)myseq.c_str(), ReadArr[j].seq);
-				}
-				SetPairedAlignmentFlag(ReportArr[i], ReportArr[j]);
-				EvaluateMAPQ(ReadArr[i].rlen, ReportArr[i]); EvaluateMAPQ(ReadArr[j].rlen, ReportArr[j]);
+				CheckPairedFinalAlignments(ReadArr[i], ReadArr[j]);
 
-				if (bDebugMode) printf("\nEnd of mapping\n\n\n");
+				SetPairedAlignmentFlag(ReadArr[i], ReadArr[j]);
+				EvaluateMAPQ(ReadArr[i]);
+				EvaluateMAPQ(ReadArr[j]);
+
+				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		else
@@ -346,26 +494,20 @@ void *ReadMapping(void *arg)
 				if (bDebugMode) printf("Mapping single read#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
 				//fprintf(stdout, "%s\n", ReadArr[i].header + 1); fflush(output);
 
-				IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq, SeedPairVec1); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
-				GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1, AlignmentVec1);
+				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
+				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
 				RemoveRedundantCandidates(AlignmentVec1); if (bDebugMode) ShowAlignmentCandidateInfo(ReadArr[i].header+1, AlignmentVec1);
-				ReportArr[i] = GenMappingReport(true, ReadArr[i], AlignmentVec1);
+				GenMappingReport(true, ReadArr[i], AlignmentVec1);
 
-				if (ReportArr[i].score > 0 && ReportArr[i].Coor.bDir == false)
-				{
-					string myseq = ReadArr[i].seq;
-					GetComplementarySeq(ReadArr[i].rlen, (char*)myseq.c_str(), ReadArr[i].seq);
-				}
-				ReportArr[i].bPaired = false; ReportArr[i].iFrag = (ReportArr[i].score == 0 ? 0x4 : (ReportArr[i].Coor.bDir ? 0x0 : 0x10));
-				EvaluateMAPQ(ReadArr[i].rlen, ReportArr[i]);
+				SetSingleAlignmentFlag(ReadArr[i]); EvaluateMAPQ(ReadArr[i]);
 
-				if (bDebugMode) printf("\nEnd of mapping --> %ld\n%s\n", (ReportArr[i].score == 0 ? 0 : ReportArr[i].Coor.gPos), string().assign(100, '=').c_str());
+				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		pthread_mutex_lock(&OutputLock);
 		iTotalReadNum += ReadNum;
-		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedSamFile(ReadArr[i], ReportArr[i], ReadArr[j], ReportArr[j]);
-		else for (i = 0; i != ReadNum; i++) OutputSingledSamFile(ReadArr[i], ReportArr[i]);
+		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedSamFile(ReadArr[i], ReadArr[j]);
+		else for (i = 0; i != ReadNum; i++) OutputSingledSamFile(ReadArr[i]);
 		pthread_mutex_unlock(&OutputLock);
 
 		for (i = 0; i != ReadNum; i++)
@@ -373,10 +515,10 @@ void *ReadMapping(void *arg)
 			delete[] ReadArr[i].header;
 			delete[] ReadArr[i].seq;
 			delete[] ReadArr[i].EncodeSeq;
+			delete[] ReadArr[i].AlnReportArr;
 		}
 	}
-	delete[] ReadArr; delete[] ReportArr;
-	//fprintf(stderr, "\niSimpleLen=%.2f, iNormalLen=%.2f\n", 1.0*iSimpleLength / (iSimpleLength + iNormalLength), 1.0*iNormalLength / (iSimpleLength + iNormalLength));
+	delete[] ReadArr;
 
 	return (void*)(1);
 }

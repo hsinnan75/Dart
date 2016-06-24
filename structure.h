@@ -134,13 +134,11 @@ typedef struct
 
 typedef struct
 {
-	bool bPaired;
-	int score;
-	int sub_score;
-	int mapq;
-	int iFrag; // SAM flag
-	Coordinate_t Coor;
-} MappingReport_t;
+	int AlnScore;
+	int iFrag; // sam flag
+	int PairedAlnCanIdx;
+	Coordinate_t coor;
+} AlignmentReport_t;
 
 typedef struct
 {
@@ -148,6 +146,13 @@ typedef struct
 	char* header;
 	char* seq;
 	uint8_t* EncodeSeq;
+	// aln report
+	int mapq;
+	int score;
+	int sub_score;
+	int CanNum;
+	int iBestAlnCanIdx;
+	AlignmentReport_t* AlnReportArr;
 } ReadItem_t;
 
 // Global variables
@@ -161,11 +166,11 @@ extern vector<int64_t> AccumulationLengthVec, PositionShiftPosVec;
 
 extern const char* VersionStr;
 extern map<int64_t, int> ChrLocMap, ExonMap;
-extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat;
+extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit;
 extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
 extern map<int64_t, int> SJmap;
-extern int MaxInsertSize, iThreadNum, MaxIntronSize;
+extern int MaxInsertSize, iThreadNum, MaxIntronSize, iInsertSize;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
 
 // bwt_index.cpp
@@ -190,12 +195,11 @@ extern void RemoveShortSeeds(vector<SeedPair_t>& SeedVec, int thr);
 extern bool CompByPosDiff(const SeedPair_t& p1, const SeedPair_t& p2);
 //extern bool CompByReadPos(const SeedPair_t& p1, const SeedPair_t& p2);
 extern bool CompByGenomePos(const SeedPair_t& p1, const SeedPair_t& p2);
+extern vector<SeedPair_t> IdentifySeedPairs(int rlen, uint8_t* EncodeSeq);
 extern void IdentifyNormalPairs(int rlen, char* seq, vector<SeedPair_t>& SeedVec);
-extern void IdentifySeedPairs(int rlen, uint8_t* EncodeSeq, vector<SeedPair_t>& SeedPairVec);
-extern MappingReport_t GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec);
+extern vector<AlignmentCandidate_t> GenerateAlignmentCandidate(int rlen, vector<SeedPair_t>& SeedPairVec);
+extern void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec);
 extern Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, vector<pair<int, char> >& cigar_vec);
-extern void GenerateAlignmentCandidate(int rlen, vector<SeedPair_t>& SeedPairVec, vector<AlignmentCandidate_t>& AlignmentVec);
-//extern bool CheckPairedAlignmentCandidates(int rlen, int EstiDistance, vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2);
 
 // GetData.cpp
 extern void GetGenomeSeq();
