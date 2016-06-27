@@ -1,4 +1,5 @@
 #include <cmath>
+#include <sys/time.h>
 #include "structure.h"
 
 #define MAPQ_COEF 30
@@ -152,7 +153,7 @@ void EvaluateMAPQ(ReadItem_t& read)
 {
 	float f;
 
-	printf("read %s: score=%d, sub_score=%d\n", read.header, read.score, read.sub_score);
+	//printf("read %s: score=%d, sub_score=%d\n", read.header, read.score, read.sub_score);
 	if (read.score == 0 || read.score == read.sub_score) read.mapq = 0;
 	else
 	{
@@ -490,17 +491,21 @@ void *ReadMapping(void *arg)
 		}
 		else
 		{
+			struct timeval tv[3]; long mtime;
 			for (i = 0; i != ReadNum; i++)
 			{
 				if (bDebugMode) printf("Mapping single read#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
 				//fprintf(stdout, "%s\n", ReadArr[i].header + 1); fflush(output);
 
-				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
+				gettimeofday(&tv[0], NULL); SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
 				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
 				RemoveRedundantCandidates(AlignmentVec1); if (bDebugMode) ShowAlignmentCandidateInfo(1, ReadArr[i].header+1, AlignmentVec1);
-				GenMappingReport(true, ReadArr[i], AlignmentVec1);
-
+				gettimeofday(&tv[1], NULL); GenMappingReport(true, ReadArr[i], AlignmentVec1);
+				gettimeofday(&tv[2], NULL);
 				SetSingleAlignmentFlag(ReadArr[i]); EvaluateMAPQ(ReadArr[i]);
+
+				mtime = ((tv[1].tv_sec - tv[0].tv_sec)* 1000 + (tv[1].tv_usec - tv[0].tv_usec) / 1000.0) + ((tv[2].tv_sec - tv[1].tv_sec) * 1000 + (tv[2].tv_usec - tv[1].tv_usec) / 1000.0) + 0.5;
+				if (mtime > 1) printf("%s (len=%d)\n%s\nRuntime=%ld ms\n", ReadArr[i].header, ReadArr[i].rlen, ReadArr[i].seq, mtime);
 
 				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
