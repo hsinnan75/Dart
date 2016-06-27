@@ -99,7 +99,7 @@ int GetNextChunk(bool bSepLibrary, fstream& file, fstream& file2, ReadItem_t* Re
 		strncpy(ReadArr[iCount].header, header.c_str() + 1, p);
 
 		//sequence
-		Convert2Cap(seq);
+		//Convert2Cap(seq);
 		ReadArr[iCount].rlen = len = (int)seq.length();
 		ReadArr[iCount].seq = new char[len + 1];
 		strcpy(ReadArr[iCount].seq, seq.c_str());
@@ -117,7 +117,7 @@ int GetNextChunk(bool bSepLibrary, fstream& file, fstream& file2, ReadItem_t* Re
 		ReadArr[iCount].header = new char[p + 1]; ReadArr[iCount].header[p] = '\0';
 		strncpy(ReadArr[iCount].header, header.c_str() + 1, p);
 		//sequence
-		Convert2Cap(seq);
+		//Convert2Cap(seq);
 		ReadArr[iCount].rlen = len = (int)seq.length();
 		ReadArr[iCount].seq = new char[len + 1];
 		if (bPairEnd) GetComplementarySeq(len, (char*)seq.c_str(), ReadArr[iCount].seq);

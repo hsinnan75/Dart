@@ -10,13 +10,13 @@ fstream ReadFileHandler1, ReadFileHandler2;
 static pthread_mutex_t LibraryLock, OutputLock;
 int iTotalReadNum = 0, iUnMapped = 0, iPaired = 0;
 
-void ShowAlignmentCandidateInfo(char* header, vector<AlignmentCandidate_t>& AlignmentVec)
+void ShowAlignmentCandidateInfo(bool bFirstRead, char* header, vector<AlignmentCandidate_t>& AlignmentVec)
 {
 	vector<AlignmentCandidate_t>::iterator iter;
 
 	printf("\n%s\n", string().assign(100, '-').c_str());
 
-	printf("Alignment Candidate for read %s\n", header);
+	printf("Alignment Candidate for read %s /%d\n", header, bFirstRead?1:2);
 	for (iter = AlignmentVec.begin(); iter != AlignmentVec.end(); iter++)
 	{
 		if (iter->Score == 0) continue;
@@ -308,9 +308,9 @@ void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
 
 bool CheckPairedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2)
 {
-	int64_t dist;
 	bool bPairing = false;
-	int i, j, best_mate, s, num1, num2;
+	int64_t dist, min_dist;
+	int i, j, best_mate, num1, num2;
 
 	num1 = (int)AlignmentVec1.size(); num2 = (int)AlignmentVec2.size();
 
@@ -319,28 +319,23 @@ bool CheckPairedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1,
 		RemoveRedundantCandidates(AlignmentVec1);
 		RemoveRedundantCandidates(AlignmentVec2);
 	}
-
 	for (i = 0; i != num1; i++)
 	{
 		if (AlignmentVec1[i].Score == 0) continue;
 
-		for (best_mate = -1, s = 0, j = 0; j != num2; j++)
+		for (best_mate = -1, min_dist = MaxIntronSize, j = 0; j != num2; j++)
 		{
-			if (AlignmentVec2[j].Score == 0 || AlignmentVec2[j].PosDiff < AlignmentVec1[i].PosDiff) continue;
+			if (AlignmentVec2[j].Score == 0) continue;
 
-			dist = AlignmentVec2[j].PosDiff - AlignmentVec1[i].PosDiff;
-			//printf("#%d (s=%d) and #%d (s=%d) (dist=%ld / %d)\n", i+1, AlignmentVec1[i].Score, j+1, AlignmentVec2[j].Score, dist, EstiDistance), fflush(stdout);
-			if (dist < iInsertSize)
+			dist = abs(AlignmentVec2[j].PosDiff - AlignmentVec1[i].PosDiff);
+			//printf("#%d (s=%d) and #%d (s=%d) (dist=%ld)\n", i+1, AlignmentVec1[i].Score, j+1, AlignmentVec2[j].Score, dist), fflush(stdout);
+			if (dist < min_dist)
 			{
-				if (AlignmentVec2[j].Score > s)
-				{
-					best_mate = j;
-					s = AlignmentVec2[j].Score;
-				}
-				else if (AlignmentVec2[j].Score == s) best_mate = -1;
+				best_mate = j;
+				min_dist = dist;
 			}
 		}
-		if (s > 0 && best_mate != -1)
+		if (best_mate != -1)
 		{
 			j = best_mate;
 			if (AlignmentVec2[j].PairedAlnCanIdx == -1)
@@ -467,13 +462,17 @@ void *ReadMapping(void *arg)
 				SeedPairVec2 = IdentifySeedPairs(ReadArr[j].rlen, ReadArr[j].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec2);
 				AlignmentVec2 = GenerateAlignmentCandidate(ReadArr[j].rlen, SeedPairVec2);
 
-				if (bDebugMode) ShowAlignmentCandidateInfo(ReadArr[i].header+1, AlignmentVec1), ShowAlignmentCandidateInfo(ReadArr[j].header+1, AlignmentVec2);
-				if (!CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2)) RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);
-
+				//if (bDebugMode) ShowAlignmentCandidateInfo(true, ReadArr[i].header+1, AlignmentVec1), ShowAlignmentCandidateInfo(false, ReadArr[j].header+1, AlignmentVec2);
+				if (CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2)) RemoveUnMatedAlignmentCandidates(AlignmentVec1, AlignmentVec2);
+				else
+				{
+					RemoveRedundantCandidates(AlignmentVec1);
+					RemoveRedundantCandidates(AlignmentVec2);
+				}
 				if (bDebugMode)
 				{
-					ShowAlignmentCandidateInfo(ReadArr[i].header + 1, AlignmentVec1);
-					ShowAlignmentCandidateInfo(ReadArr[j].header + 1, AlignmentVec2);
+					ShowAlignmentCandidateInfo(1, ReadArr[i].header + 1, AlignmentVec1);
+					ShowAlignmentCandidateInfo(0, ReadArr[j].header + 1, AlignmentVec2);
 				}
 				GenMappingReport(true,  ReadArr[i], AlignmentVec1);
 				GenMappingReport(false, ReadArr[j], AlignmentVec2);
@@ -496,7 +495,7 @@ void *ReadMapping(void *arg)
 
 				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
 				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
-				RemoveRedundantCandidates(AlignmentVec1); if (bDebugMode) ShowAlignmentCandidateInfo(ReadArr[i].header+1, AlignmentVec1);
+				RemoveRedundantCandidates(AlignmentVec1); if (bDebugMode) ShowAlignmentCandidateInfo(1, ReadArr[i].header+1, AlignmentVec1);
 				GenMappingReport(true, ReadArr[i], AlignmentVec1);
 
 				SetSingleAlignmentFlag(ReadArr[i]); EvaluateMAPQ(ReadArr[i]);

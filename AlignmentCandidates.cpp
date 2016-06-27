@@ -207,7 +207,7 @@ vector<SeedPair_t> IdentifySeedPairs(int rlen, uint8_t* EncodeSeq)
 		else
 		{
 			bwtSearchResult = BWT_Search(EncodeSeq, pos, rlen);
-			if (bDebugMode) printf("Pos=%d, Freq=%d, Len=%d\n", pos, bwtSearchResult.freq, bwtSearchResult.len);
+			//if (bDebugMode) printf("Pos=%d, Freq=%d, Len=%d\n", pos, bwtSearchResult.freq, bwtSearchResult.len);
 			if (bwtSearchResult.freq > 0)
 			{
 				SeedPair.rPos = pos; SeedPair.rLen = SeedPair.gLen = bwtSearchResult.len;

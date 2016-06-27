@@ -249,7 +249,7 @@ bwtSearchResult_t BWT_LocalSearch(uint8_t* seq, int start, int stop, int64_t L_B
 		bwtSearchResult.len = pos - start;
 		uk = ik;
 	}
-	if(bDebugMode) printf("End_BWT_LocalSearch: len = %d, freq = %d\n", pos - start, (int)uk.x[2]);
+	//if(bDebugMode) printf("End_BWT_LocalSearch: len = %d, freq = %d\n", pos - start, (int)uk.x[2]);
 
 	if (bwtSearchResult.len > 0)
 	{
