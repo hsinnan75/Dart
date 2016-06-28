@@ -31,30 +31,9 @@ uint32_t CreateKmerID(const char* seq, short pos)
 	return id;
 }
 
-string DecodeWordID(uint32_t id)
+vector<KmerItem_t> CreateKmerVecFromReadSeq(int len, char* seq)
 {
-	string str;
-	int i, index;
-
-	for (i = 0; i < KmerSize; i++)
-	{
-		index = (id & 3); //id % 4;
-		switch (index)
-		{
-		case 0: str.push_back('A'); break;
-		case 1: str.push_back('C'); break;
-		case 2: str.push_back('G'); break;
-		default: str.push_back('T'); break;
-		}
-		id = (id >> 2); // id/=4
-	}
-	reverse(str.begin(), str.end());
-
-	return str;
-}
-
-void CreateKmerVecFromReadSeq(int len, char* seq, vector<KmerItem_t>& vec)
-{
+	vector<KmerItem_t> vec;
 	KmerItem_t WordPosition;
 	uint32_t count, head, tail;
 
@@ -97,16 +76,18 @@ void CreateKmerVecFromReadSeq(int len, char* seq, vector<KmerItem_t>& vec)
 		}
 		sort(vec.begin(), vec.end(), CompByKmerID);
 	}
+	return vec;
 }
 
-void IdentifyCommonKmers(vector<KmerItem_t>& vec1, vector<KmerItem_t>& vec2, vector<KmerPair_t>& KmerPairVec)
+vector<KmerPair_t> IdentifyCommonKmers(vector<KmerItem_t>& vec1, vector<KmerItem_t>& vec2)
 {
 	int i, num;
 	uint32_t wid;
 	KmerPair_t KmerPair;
+	vector<KmerPair_t> KmerPairVec;
 	vector<KmerItem_t>::iterator KmerPtr;
 
-	num = (int)vec1.size(); KmerPairVec.clear();
+	num = (int)vec1.size();
 	for (i = 0; i < num; i++)
 	{
 		wid = vec1[i].wid; KmerPtr = lower_bound(vec2.begin(), vec2.end(), vec1[i], CompByKmerID);
@@ -120,40 +101,10 @@ void IdentifyCommonKmers(vector<KmerItem_t>& vec1, vector<KmerItem_t>& vec2, vec
 		}
 	}
 	sort(KmerPairVec.begin(), KmerPairVec.end(), CompByKmerPosDiff);
+
+	return KmerPairVec;
 }
 
-//SeedPair_t GenerateSimplePairsFromCommonKmers(vector<KmerPair_t>& KmerPairVec)
-//{
-//	SeedPair_t SeedPair;
-//	int i, j, max_len, l, PosDiff, n_pos, num;
-//
-//	SeedPair.bSimple = true; SeedPair.rLen = SeedPair.gLen = 0;
-//
-//	num = (int)KmerPairVec.size(); max_len = 0;
-//	for (i = 0; i < num;)
-//	{
-//		//printf("KmerPair %d: %d PosDiff = %d\n", i+1, KmerPairVec[i].rPos, KmerPairVec[i].PosDiff);
-//		for (PosDiff = KmerPairVec[i].PosDiff, n_pos = KmerPairVec[i].rPos + 1, j = i + 1; j < num; j++)
-//		{
-//			if (KmerPairVec[j].rPos != n_pos || KmerPairVec[j].PosDiff != PosDiff) break;
-//			//printf("KmerPair: %d PosDiff = %d\n", KmerPairVec[j].rPos, KmerPairVec[j].PosDiff);
-//			n_pos++;
-//		}
-//		if ((l = KmerSize + (j - 1 - i)) > max_len)
-//		{
-//			//printf("Seed found! r=%d, l=%d\n\n", KmerPairVec[i].rPos, l);
-//			SeedPair.rPos = KmerPairVec[i].rPos;
-//			SeedPair.gPos = KmerPairVec[i].gPos;
-//			max_len = SeedPair.rLen = SeedPair.gLen = l;
-//		}
-//		else if (l == max_len)
-//		{
-//			SeedPair.rLen = SeedPair.gLen = 0;
-//		}
-//		i = j;
-//	}
-//	return SeedPair;
-//}
 SeedPair_t GenerateSimplePairsFromCommonKmers(vector<KmerPair_t>& KmerPairVec)
 {
 	SeedPair_t SeedPair;
@@ -175,10 +126,6 @@ SeedPair_t GenerateSimplePairsFromCommonKmers(vector<KmerPair_t>& KmerPairVec)
 			SeedPair.gPos = KmerPairVec[i].gPos;
 			max_len = SeedPair.rLen = SeedPair.gLen = l;
 		}
-		//else if (l == max_len)
-		//{
-		//	SeedPair.rLen = SeedPair.gLen = 0;
-		//}
 		i = j;
 	}
 	return SeedPair;
@@ -191,9 +138,10 @@ SeedPair_t GenerateLongestSimplePairsFromFragmentPair(int len1, char* frag1, int
 	vector<KmerItem_t> KmerVec1, KmerVec2;
 	int i, j, l, s, max_len, PosDiff, n_pos, num;
 
-	CreateKmerVecFromReadSeq(len1, frag1, KmerVec1); CreateKmerVecFromReadSeq(len2, frag2, KmerVec2);
-	IdentifyCommonKmers(KmerVec1, KmerVec2, KmerPairVec);
-	SeedPair.bSimple = true; SeedPair.rLen = SeedPair.gLen = 0;
+	KmerVec1 = CreateKmerVecFromReadSeq(len1, frag1); 
+	KmerVec2 = CreateKmerVecFromReadSeq(len2, frag2);
+	KmerPairVec = IdentifyCommonKmers(KmerVec1, KmerVec2);
+	SeedPair.bSimple = true; SeedPair.bAcceptorSite = false; SeedPair.rLen = SeedPair.gLen = 0;
 
 	num = (int)KmerPairVec.size(); max_len = 0;
 	for (s = 1, i = 0; i < num;)
@@ -211,10 +159,6 @@ SeedPair_t GenerateLongestSimplePairsFromFragmentPair(int len1, char* frag1, int
 			max_len = SeedPair.rLen = SeedPair.gLen = l;
 			s = 1;
 		}
-		//else if (l == max_len)
-		//{
-		//	SeedPair.rLen = SeedPair.gLen = 0;
-		//}
 		i = j;
 	}
 

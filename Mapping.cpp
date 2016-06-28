@@ -160,9 +160,8 @@ void EvaluateMAPQ(ReadItem_t& read)
 		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = 255;
 		else
 		{
-			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / 10.0)*log(read.score) + 0.4999);
+			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
 			if (read.mapq > 255) read.mapq = 255;
-			else if (read.mapq < 0) read.mapq = 0;
 
 			f = 1.0*read.score / read.rlen;
 			read.mapq = (f < 0.95 ? (int)(read.mapq * f * f) : read.mapq);

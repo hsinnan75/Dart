@@ -1,16 +1,16 @@
 #include "structure.h"
 
-const float MaxPenalty = -65536;
-const float OPEN_GAP = -1.5;
-const float EXTEND_GAP = -0.5;
-const float NEW_GAP = -2.0; //OPEN_GAP + EXTEND_GAP;
+const short MaxPenalty = -32768;
+const short OPEN_GAP = -1;
+const short EXTEND_GAP = -1;
+const short NEW_GAP = -2; //OPEN_GAP + EXTEND_GAP;
 
-double max(float x, float y)
+double max(short x, short y)
 {
 	return x > y ? x : y;
 }
 
-double max(float x, float y, float z)
+double max(short x, short y, short z)
 {
 	return x > y ? max(x, z) : max(y, z);
 }
@@ -21,15 +21,15 @@ void PairwiseSequenceAlignment(int m, string& s1, int n, string& s2)
 
 	m = m + 1, n = n + 1;
 
-	float** r = new float*[m];
-	float** t = new float*[m];
-	float** s = new float*[m];
+	short** r = new short*[m];
+	short** t = new short*[m];
+	short** s = new short*[m];
 
 	for (i = 0; i < m; i++)
 	{
-		r[i] = new float[n];
-		t[i] = new float[n];
-		s[i] = new float[n];
+		r[i] = new short[n];
+		t[i] = new short[n];
+		s[i] = new short[n];
 	}
 
 	// initialization
@@ -52,12 +52,12 @@ void PairwiseSequenceAlignment(int m, string& s1, int n, string& s2)
 		{
 			r[i][j] = max(r[i][j - 1] + EXTEND_GAP, s[i][j - 1] + NEW_GAP);
 			t[i][j] = max(t[i - 1][j] + EXTEND_GAP, s[i - 1][j] + NEW_GAP);
-			if (s1[i - 1] == 'N' || s2[j - 1] == 'N') s[i][j] = max(s[i - 1][j - 1] + 1, r[i][j], t[i][j]);
-			else s[i][j] = max(s[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 1 : -1), r[i][j], t[i][j]);
+			//if (s1[i - 1] == 'N' || s2[j - 1] == 'N') s[i][j] = max(s[i - 1][j - 1] + 1, r[i][j], t[i][j]);
+			//else s[i][j] = max(s[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 1 : -1), r[i][j], t[i][j]);
+			s[i][j] = max(s[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 1 : -1), r[i][j], t[i][j]);
 		}
 	}
 
-	// back tracking
 	i = m - 1, j = n - 1;
 	while (i > 0 || j > 0) {
 		if (s[i][j] == r[i][j]) {
@@ -73,12 +73,9 @@ void PairwiseSequenceAlignment(int m, string& s1, int n, string& s2)
 		}
 	}
 
-	if (n > 0)
+	for (i = 0; i < m; i++)
 	{
-		for (i = 0; i < m; i++)
-		{
-			delete[] r[i]; delete[] t[i]; delete[] s[i];
-		}
+		delete[] r[i]; delete[] t[i]; delete[] s[i];
 	}
 
 	delete[] r; delete[] t; delete[] s;

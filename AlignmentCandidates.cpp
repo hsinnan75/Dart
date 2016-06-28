@@ -261,7 +261,7 @@ vector<AlignmentCandidate_t> GenerateAlignmentCandidate(int rlen, vector<SeedPai
 	if ((num = SeedPairVec.size() == 0)) return AlignmentVec;
 	else AlignmentCandidate.PairedAlnCanIdx = -1;
 
-	if ((thr = (int)(rlen*0.2)) > 30) thr = 30;
+	thr = (int)(rlen*0.25);
 
 	//if (bDebugMode) printf("\n\nRaw seeds:\n"), ShowSeedInfo(SeedPairVec);
 	 num = (int)SeedPairVec.size();
@@ -582,10 +582,11 @@ SeedPair_t ReseedingWithSpecificRegion(char* seq, int rBegin, int rEnd, int64_t 
 
 	if (bDebugMode) printf("Perform re-seeding between r[%d-%d] g[%ld - %ld]\n", rBegin, rEnd - 1, L_Boundary, R_Boundary);
 
-	rlen = rEnd - rBegin; frag1 = new char[rlen + 1]; strncpy(frag1, seq + rBegin, rlen);
-	glen = R_Boundary - L_Boundary; frag2 = new char[glen + 1]; strncpy(frag2, RefSequence + L_Boundary, glen);
+	rlen = rEnd - rBegin; glen = R_Boundary - L_Boundary;
+	frag1 = new char[rlen + 1]; strncpy(frag1, seq + rBegin, rlen);
+	frag2 = new char[glen + 1]; strncpy(frag2, RefSequence + L_Boundary, glen);
 
-	thr = (int)(rlen*0.85); if (thr < KmerSize) thr = KmerSize;
+	if ((thr = (int)(rlen*0.85)) < KmerSize) thr = KmerSize;
 	seed = GenerateLongestSimplePairsFromFragmentPair(rlen, frag1, glen, frag2);
 	if(seed.rLen >= thr)
 	{
@@ -673,7 +674,7 @@ void IdentifyMissingSeeds(int rlen, char* seq, vector<SeedPair_t>& SeedVec)
 	seed.bAcceptorSite = false;
 	for (i = 1; i < num; i++)
 	{
-		if ((PosDiff = (int)(SeedVec[i].PosDiff - SeedVec[i - 1].PosDiff)) > MaxGaps && (rGaps = SeedVec[i].rPos - SeedVec[i - 1].rPos - SeedVec[i - 1].rLen) > 10)
+		if ((PosDiff = (int)(SeedVec[i].PosDiff - SeedVec[i - 1].PosDiff)) > MaxGaps && (rGaps = SeedVec[i].rPos - SeedVec[i - 1].rPos - SeedVec[i - 1].rLen) > 20)
 		{
 			seed = ReseedingWithSpecificRegion(seq, SeedVec[i - 1].rPos + SeedVec[i - 1].rLen, SeedVec[i].rPos, SeedVec[i - 1].gPos + SeedVec[i - 1].gLen, SeedVec[i].gPos);
 			if (seed.rLen > 0) SeedVec.push_back(seed);
@@ -788,79 +789,6 @@ void CheckSpliceJunction(int rlen, char* seq, uint8_t* EncodeSeq, vector<SeedPai
 			}
 		}
 	}
-	/*
-	// finding missing head & tail seeds
-	if (num > 0 && SeedVec[0].rPos > 0)
-	{
-		// check extension first
-		for (i = 0, rPos = SeedVec[0].rPos - 1, gPos = SeedVec[0].gPos - 1; rPos >= 0; rPos--, gPos--)
-		{
-			if (seq[rPos] != RefSequence[gPos]) break;
-			else i++;
-		}
-		if (i > 0)
-		{
-			SeedVec[0].rPos -= i; SeedVec[0].rLen += i;
-			SeedVec[0].gPos -= i; SeedVec[0].gLen += i;
-		}
-		// identify acceptor site
-		if (best_type != -1)
-		{
-			for (shift = 0; shift < 10; shift++)
-			{
-				gPos = SeedVec[0].gPos + shift - 2;
-				if (RefSequence[gPos] == SpliceJunctionArr[best_type][3] && RefSequence[gPos + 1] == SpliceJunctionArr[best_type][4])
-				{
-					SeedVec[0].bAcceptorSite = true;
-					break;
-				}
-			}
-			if (shift > 0 && shift < 10)
-			{
-				SeedVec[0].rPos += shift; SeedVec[0].rLen -= shift;
-				SeedVec[0].gPos += shift; SeedVec[0].gLen -= shift;
-			}
-		}
-		//if (bDebugMode) printf("Misising heading seed\n");
-		//seed = IdentifyHeadingSeed(seq, EncodeSeq, SeedVec[0].rPos, SeedVec[0].gPos);
-		//if (seed.rLen > 0)
-		//{
-		//	//printf("Found missing heading seed: r[%d-%d] g[%ld-%ld] l=%d\n", seed.rPos, seed.rPos + seed.rLen - 1, seed.gPos, seed.gPos + seed.gLen - 1, seed.rLen);
-		//	if (SeedVec[0].rPos - (seed.rPos + seed.rLen) > 0) FillGapsBetweenAdjacentSeeds(seq, seed, SeedVec[0], Vec);
-		//	Vec.push_back(seed);
-		//}
-	}
-	// check missing tailing seed
-	if (num > 0 && (j = (rlen - (SeedVec[num - 1].rPos + SeedVec[num - 1].rLen))) > 0 && j < 50)
-	{
-		// identify donor site
-		if (best_type != -1)
-		{
-			for (shift = 0; shift < 10; shift++)
-			{
-				gPos = SeedVec[num - 1].gPos + SeedVec[num - 1].gLen - shift;
-				if (RefSequence[gPos] == SpliceJunctionArr[best_type][0] && RefSequence[gPos + 1] == SpliceJunctionArr[best_type][1]) break;
-			}
-			if (shift > 0 && shift < 10)
-			{
-				SeedVec[num - 1].rLen -= shift;
-				SeedVec[num - 1].gLen -= shift;
-			}
-		}
-		//if (bDebugMode) printf("Misising tailing seed\n");
-		//seed = IdentifyTailingSeed(seq, SeedVec[num - 1].rPos + SeedVec[num - 1].rLen, rlen, SeedVec[num - 1].gPos + SeedVec[num - 1].gLen);
-		//if (seed.rLen > 0)
-		//{
-		//	if (seed.rPos - (SeedVec[num - 1].rPos + SeedVec[num - 1].rLen) > 0) FillGapsBetweenAdjacentSeeds(seq, SeedVec[num - 1], seed, Vec);
-		//	Vec.push_back(seed);
-		//}
-	}
-	//if (Vec.size() > 0)
-	//{
-	//	copy(Vec.begin(), Vec.end(), back_inserter(SeedVec));
-	//	sort(SeedVec.begin(), SeedVec.end(), CompByGenomePos);
-	//}
-	*/
 	if (bDebugMode)
 	{
 		if (best_type != -1)
@@ -1086,12 +1014,7 @@ void IdentifyNormalPairs(int rlen, char* seq, vector<SeedPair_t>& SeedVec)
 				SeedPair.rLen = rGaps; SeedPair.gLen = gGaps;
 				
 				SeedVec.push_back(SeedPair);
-				//if(abs(rGaps - gGaps) < 10) SeedVec.push_back(SeedPair);
-				//else
-				//{
-				//	printf("normal pair (%s):\nR1[%d-%d] G1[%ld-%ld]\nNR[%d-%d]=%d NG[%ld-%ld]=%d\nR2[%d-%d] G2[%ld-%ld]\n\n\n", seq, SeedVec[i].rPos, SeedVec[i].rPos + SeedVec[i].rLen - 1, SeedVec[i].gPos, SeedVec[i].gPos + SeedVec[i].gLen - 1, SeedPair.rPos, SeedPair.rPos + SeedPair.rLen - 1, SeedPair.rLen, SeedPair.gPos, SeedPair.gPos + SeedPair.gLen - 1, SeedPair.gLen, SeedVec[j].rPos, SeedVec[j].rPos + SeedVec[j].rLen - 1, SeedVec[j].gPos, SeedVec[j].gPos + SeedVec[j].gLen - 1);
-				//}
-				//if (bDebugMode) printf("Case2 normal pair:\nR1[%d-%d] G1[%ld-%ld]\nNR[%d-%d]=%d NG[%ld-%ld]=%d\nR2[%d-%d] G2[%ld-%ld]\n", SeedVec[i].rPos, SeedVec[i].rPos + SeedVec[i].rLen - 1, SeedVec[i].gPos, SeedVec[i].gPos + SeedVec[i].gLen - 1, SeedPair.rPos, SeedPair.rPos + SeedPair.rLen - 1, SeedPair.rLen, SeedPair.gPos, SeedPair.gPos + SeedPair.gLen - 1, SeedPair.gLen, SeedVec[j].rPos, SeedVec[j].rPos + SeedVec[j].rLen - 1, SeedVec[j].gPos, SeedVec[j].gPos + SeedVec[j].gLen - 1); fflush(stdout);
+				//if (bDebugMode) printf("normal pair:\nR1[%d-%d] G1[%ld-%ld]\nNR[%d-%d]=%d NG[%ld-%ld]=%d\nR2[%d-%d] G2[%ld-%ld]\n", SeedVec[i].rPos, SeedVec[i].rPos + SeedVec[i].rLen - 1, SeedVec[i].gPos, SeedVec[i].gPos + SeedVec[i].gLen - 1, SeedPair.rPos, SeedPair.rPos + SeedPair.rLen - 1, SeedPair.rLen, SeedPair.gPos, SeedPair.gPos + SeedPair.gLen - 1, SeedPair.gLen, SeedVec[j].rPos, SeedVec[j].rPos + SeedVec[j].rLen - 1, SeedVec[j].gPos, SeedVec[j].gPos + SeedVec[j].gLen - 1); fflush(stdout);
 			}
 		}
 		if ((int)SeedVec.size() > num) inplace_merge(SeedVec.begin(), SeedVec.begin()+num, SeedVec.end(), CompByGenomePos);
@@ -1146,7 +1069,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			//printf("After SeedExtension\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			CheckSpliceJunction(read.rlen, read.seq, read.EncodeSeq, AlignmentVec[i].SeedVec);
 			//printf("After CheckSpliceJunction\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
-			IdentifyNormalPairs(read.rlen, read.seq, AlignmentVec[i].SeedVec); // fill missing framgment pairs (normal pairs) between simple pairs
+			IdentifyNormalPairs(read.rlen, read.seq, AlignmentVec[i].SeedVec); // fill missing framgment pairs between simple pairs
 			//printf("After IdentifyNormalPairs\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			if (bDebugMode)
 			{
