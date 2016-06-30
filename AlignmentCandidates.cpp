@@ -117,7 +117,7 @@ Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, 
 		else
 		{
 			iter = ChrLocMap.lower_bound(gPos);
-		coor.gPos = iter->first - end_gPos + 1; coor.ChromosomeIdx = iter->second;
+			coor.gPos = iter->first - end_gPos + 1; coor.ChromosomeIdx = iter->second;
 			//if(bDebugMode) printf("matched chr=%s, loc=%ld, gPos: %ld -> %ld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, gPos, coor.gPos);
 		}
 	}
