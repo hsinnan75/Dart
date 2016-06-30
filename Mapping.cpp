@@ -9,7 +9,7 @@ time_t StartProcessTime;
 bool bSepLibrary = false;
 fstream ReadFileHandler1, ReadFileHandler2;
 static pthread_mutex_t LibraryLock, OutputLock;
-int iTotalReadNum = 0, iUnMapped = 0, iPaired = 0;
+int iTotalReadNum = 0, iUniqueMapped = 0, iUnMapped = 0, iPaired = 0;
 
 void ShowAlignmentCandidateInfo(bool bFirstRead, char* header, vector<AlignmentCandidate_t>& AlignmentVec)
 {
@@ -39,7 +39,7 @@ void SetSingleAlignmentFlag(ReadItem_t& read)
 {
 	int i;
 
-	if (read.score > read.sub_score || bMultiHit == false) // unique mapping or bMultiHit=false
+	if ((read.score > read.sub_score && ++iUniqueMapped) || bMultiHit == false) // unique mapping or bMultiHit=false
 	{
 		i = read.iBestAlnCanIdx;
 		if (read.AlnReportArr[i].coor.bDir == false) read.AlnReportArr[i].iFrag = 0x10;
@@ -69,6 +69,7 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 	//printf("read1:[%d, %d]:#%d, read2:[%d, %d] #%d\n", read1.score, read1.sub_score, read1.iBestAlnCanIdx, read2.score, read2.sub_score, read2.iBestAlnCanIdx); fflush(stdout);
 	if (read1.score > read1.sub_score && read2.score > read2.sub_score) // unique mapping
 	{
+		iUniqueMapped += 2;
 		i = read1.iBestAlnCanIdx;
 		read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
 
@@ -85,7 +86,7 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 	}
 	else
 	{
-		if (read1.score > read1.sub_score || bMultiHit == false) // unique mapping or bMultiHit=false
+		if ((read1.score > read1.sub_score && ++iUniqueMapped) || bMultiHit == false) // unique mapping or bMultiHit=false
 		{
 			i = read1.iBestAlnCanIdx;
 			read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
@@ -116,7 +117,7 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 			else read1.AlnReportArr[0].iFrag |= (read2.AlnReportArr[read2.iBestAlnCanIdx].coor.bDir ? 0x10 : 0x20);
 		}
 
-		if (read2.score > read2.sub_score || bMultiHit == false) // unique mapping or bMultiHit=false
+		if ((read2.score > read2.sub_score && ++iUniqueMapped) || bMultiHit == false) // unique mapping or bMultiHit=false
 		{
 			j = read2.iBestAlnCanIdx;
 			read2.AlnReportArr[j].iFrag = 0x81; // read2 is the second read in a pair
@@ -449,7 +450,7 @@ void *ReadMapping(void *arg)
 	{
 		pthread_mutex_lock(&LibraryLock);
 		ReadNum = GetNextChunk(bSepLibrary, ReadFileHandler1, ReadFileHandler2, ReadArr);
-		fprintf(stderr, "\r%d %s reads have been processed in %ld seconds...", iTotalReadNum, (bPairEnd? "paired-end":"singled-end"), (time(NULL) - StartProcessTime));
+		fprintf(stderr, "\r%d %s tags have been processed in %ld seconds...", iTotalReadNum, (bPairEnd? "paired-end":"singled-end"), (time(NULL) - StartProcessTime));
 		pthread_mutex_unlock(&LibraryLock);
 		
 		if (ReadNum == 0) break;
@@ -457,7 +458,7 @@ void *ReadMapping(void *arg)
 		{
 			for (i = 0, j = 1; i != ReadNum; i += 2, j += 2)
 			{
-				if (bDebugMode) printf("Mapping paired reads#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
+				if (bDebugMode) printf("Mapping paired tags#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
 
 				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
 				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
@@ -486,28 +487,23 @@ void *ReadMapping(void *arg)
 				EvaluateMAPQ(ReadArr[i]);
 				EvaluateMAPQ(ReadArr[j]);
 
-				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
+				if (bDebugMode) printf("\nEnd of mapping for tag#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		else
 		{
-			struct timeval tv[3]; long mtime;
 			for (i = 0; i != ReadNum; i++)
 			{
-				if (bDebugMode) printf("Mapping single read#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
+				if (bDebugMode) printf("Mapping single tag#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
 				//fprintf(stdout, "%s\n", ReadArr[i].header + 1); fflush(output);
 
-				gettimeofday(&tv[0], NULL); SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
+				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
 				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
 				RemoveRedundantCandidates(AlignmentVec1); if (bDebugMode) ShowAlignmentCandidateInfo(1, ReadArr[i].header+1, AlignmentVec1);
-				gettimeofday(&tv[1], NULL); GenMappingReport(true, ReadArr[i], AlignmentVec1);
-				gettimeofday(&tv[2], NULL);
+				GenMappingReport(true, ReadArr[i], AlignmentVec1);
 				SetSingleAlignmentFlag(ReadArr[i]); EvaluateMAPQ(ReadArr[i]);
 
-				mtime = ((tv[1].tv_sec - tv[0].tv_sec)* 1000 + (tv[1].tv_usec - tv[0].tv_usec) / 1000.0) + ((tv[2].tv_sec - tv[1].tv_sec) * 1000 + (tv[2].tv_usec - tv[1].tv_usec) / 1000.0) + 0.5;
-				if (mtime > 1) printf("%s (len=%d)\n%s\nRuntime=%ld ms\n", ReadArr[i].header, ReadArr[i].rlen, ReadArr[i].seq, mtime);
-
-				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
+				if (bDebugMode) printf("\nEnd of mapping for tag#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		pthread_mutex_lock(&OutputLock);
@@ -574,7 +570,7 @@ void Mapping()
 	for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
 
 	ReadFileHandler1.close(); if (ReadFileName2 != NULL) ReadFileHandler2.close();
-	fprintf(stderr, "\rAll the %d %s reads have been processed in %lld seconds.\n", iTotalReadNum, (bPairEnd? "paired-end":"single-end"), (long long)(time(NULL) - StartProcessTime));
+	fprintf(stderr, "\rAll the %d %s tags have been processed in %lld seconds.\n", iTotalReadNum, (bPairEnd? "paired-end":"single-end"), (long long)(time(NULL) - StartProcessTime));
 
 	if (SamFileName != NULL) fclose(output);
 
@@ -582,7 +578,10 @@ void Mapping()
 
 	if(iTotalReadNum > 0)
 	{
-		if (bPairEnd) fprintf(stderr, "\t# of total mapped sequences = %d (sensitivity = %.2f%%)\n\t# of paired sequences = %d (%.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0, iPaired, (int)(10000 * (1.0*iPaired / iTotalReadNum) + 0.5) / 100.0);
-		else fprintf(stderr, "\t# of total mapped sequences = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
+		if (bPairEnd) fprintf(stderr, "\t# of total mapped tags = %d (sensitivity = %.2f%%)\n\t# of paired sequences = %d (%.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0, iPaired, (int)(10000 * (1.0*iPaired / iTotalReadNum) + 0.5) / 100.0);
+		else fprintf(stderr, "\t# of total mapped tags = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
+		fprintf(stderr, "\t# of unique mapped tags = %d (%.2f%%)\n", iUniqueMapped, (int)(10000 * (1.0*iUniqueMapped / iTotalReadNum) + 0.5) / 100.0);
+		fprintf(stderr, "\t# of multiple mapped tags = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
+		fprintf(stderr, "\t# of unmapped tags = %d (%.2f%%)\n", iUnMapped, (int)(10000 * (1.0*iUnMapped / iTotalReadNum) + 0.5) / 100.0);
 	}
 }
