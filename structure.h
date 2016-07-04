@@ -166,7 +166,7 @@ extern vector<int64_t> AccumulationLengthVec, PositionShiftPosVec;
 
 extern const char* VersionStr;
 extern map<int64_t, int> ChrLocMap, ExonMap;
-extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit;
+extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique;
 extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
 extern map<int64_t, int> SJmap;

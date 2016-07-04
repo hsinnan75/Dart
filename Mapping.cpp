@@ -163,6 +163,7 @@ void EvaluateMAPQ(ReadItem_t& read)
 		{
 			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
 			if (read.mapq > 255) read.mapq = 255;
+			else if (read.mapq < 1) read.mapq = 1;
 
 			f = 1.0*read.score / read.rlen;
 			read.mapq = (f < 0.95 ? (int)(read.mapq * f * f) : read.mapq);
@@ -175,7 +176,7 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 	char *seq, *rseq;
 	int i, j, dist = 0;
 
-	if (read1.score == 0)
+	if (read1.score == 0 || (bUnique && read1.mapq == 0))
 	{
 		iUnMapped++;
 		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header, read1.AlnReportArr[0].iFrag, read1.seq);
@@ -209,7 +210,7 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 		}
 	}
 
-	if (read2.score == 0)
+	if (read2.score == 0 || (bUnique && read2.mapq == 0))
 	{
 		iUnMapped++;
 		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header, read2.AlnReportArr[0].iFrag, read2.seq);
@@ -245,7 +246,7 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 
 void OutputSingledSamFile(ReadItem_t& read)
 {
-	if (read.score == 0)
+	if (read.score == 0 || (bUnique && read.mapq == 0))
 	{
 		iUnMapped++;
 		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read.header, read.AlnReportArr[0].iFrag, read.seq);
@@ -408,7 +409,6 @@ void CheckPairedFinalAlignments(ReadItem_t& read1, ReadItem_t& read2)
 					read2.iBestAlnCanIdx = j; read2.score = read2.AlnReportArr[j].AlnScore;
 				}
 			}
-			//else read1.AlnReportArr[i].PairedAlnCanIdx = -1;
 		}
 	}
 	if (bMated)
@@ -468,11 +468,8 @@ void *ReadMapping(void *arg)
 
 				//if (bDebugMode) ShowAlignmentCandidateInfo(true, ReadArr[i].header+1, AlignmentVec1), ShowAlignmentCandidateInfo(false, ReadArr[j].header+1, AlignmentVec2);
 				if (CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2)) RemoveUnMatedAlignmentCandidates(AlignmentVec1, AlignmentVec2);
-				else
-				{
-					RemoveRedundantCandidates(AlignmentVec1);
-					RemoveRedundantCandidates(AlignmentVec2);
-				}
+				RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);
+
 				if (bDebugMode)
 				{
 					ShowAlignmentCandidateInfo(1, ReadArr[i].header + 1, AlignmentVec1);
@@ -484,8 +481,7 @@ void *ReadMapping(void *arg)
 				CheckPairedFinalAlignments(ReadArr[i], ReadArr[j]);
 
 				SetPairedAlignmentFlag(ReadArr[i], ReadArr[j]);
-				EvaluateMAPQ(ReadArr[i]);
-				EvaluateMAPQ(ReadArr[j]);
+				EvaluateMAPQ(ReadArr[i]); EvaluateMAPQ(ReadArr[j]);
 
 				if (bDebugMode) printf("\nEnd of mapping for tag#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
@@ -581,7 +577,7 @@ void Mapping()
 		if (bPairEnd) fprintf(stderr, "\t# of total mapped tags = %d (sensitivity = %.2f%%)\n\t# of paired sequences = %d (%.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0, iPaired, (int)(10000 * (1.0*iPaired / iTotalReadNum) + 0.5) / 100.0);
 		else fprintf(stderr, "\t# of total mapped tags = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
 		fprintf(stderr, "\t# of unique mapped tags = %d (%.2f%%)\n", iUniqueMapped, (int)(10000 * (1.0*iUniqueMapped / iTotalReadNum) + 0.5) / 100.0);
-		fprintf(stderr, "\t# of multiple mapped tags = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
+		//fprintf(stderr, "\t# of multiple mapped tags = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
 		fprintf(stderr, "\t# of unmapped tags = %d (%.2f%%)\n", iUnMapped, (int)(10000 * (1.0*iUnMapped / iTotalReadNum) + 0.5) / 100.0);
 	}
 }

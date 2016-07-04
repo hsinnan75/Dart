@@ -3,7 +3,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 const char* VersionStr = "1.0.0";
-bool bDebugMode, bPairEnd, FastQFormat, bMultiHit;
+bool bDebugMode, bPairEnd, FastQFormat, bMultiHit, bUnique;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, iInsertSize;
 char *RefSequence, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
 	bPairEnd = false;
 	bDebugMode = false;
 	bMultiHit = false;
+	bUnique = false;
 	MaxIntronSize = 500000;
 	FastQFormat = true; // fastq:true, fasta:false
 	RefSequence = IndexFileName = ReadFileName = ReadFileName2 = SamFileName = NULL;
@@ -92,6 +93,7 @@ int main(int argc, char* argv[])
 			else if (parameter == "-o") SamFileName = argv[++i];
 			else if (parameter == "-pair" || parameter == "-p") bPairEnd = true;
 			else if (parameter == "-m") bMultiHit = true;
+			else if (parameter == "-unique") bUnique = true;
 			else if (parameter == "-intron")
 			{
 				if ((MaxIntronSize = atoi(argv[++i])) < 100000) MaxIntronSize = 100000;
@@ -113,6 +115,7 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "         -f            files with #1 mates reads\n");
 			fprintf(stderr, "         -f2           files with #2 mates reads\n");
 			fprintf(stderr, "         -m            output multiple alignments\n");
+			fprintf(stderr, "         -unique       output uniquely mapped alignments\n");
 			fprintf(stderr, "         -p	\t	paired-end reads are interlaced in the same file\n");
 			fprintf(stderr, "\n");
 			exit(0);

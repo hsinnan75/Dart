@@ -261,7 +261,7 @@ vector<AlignmentCandidate_t> GenerateAlignmentCandidate(int rlen, vector<SeedPai
 	if ((num = SeedPairVec.size() == 0)) return AlignmentVec;
 	else AlignmentCandidate.PairedAlnCanIdx = -1;
 
-	thr = (int)(rlen*0.25);
+	thr = (int)(rlen*0.3);
 
 	//if (bDebugMode) printf("\n\nRaw seeds:\n"), ShowSeedInfo(SeedPairVec);
 	 num = (int)SeedPairVec.size();
@@ -1126,7 +1126,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			else if (read.AlnReportArr[i].AlnScore == read.score)
 			{
 				read.sub_score = read.score;
-				if (!bMultiHit && ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].len > ChromosomeVec[read.AlnReportArr[read.iBestAlnCanIdx].coor.ChromosomeIdx].len) read.iBestAlnCanIdx = i;
+				//if (!bMultiHit && ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].len > ChromosomeVec[read.AlnReportArr[read.iBestAlnCanIdx].coor.ChromosomeIdx].len) read.iBestAlnCanIdx = i;
 			}
 		}
 	}
