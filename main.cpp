@@ -5,7 +5,8 @@ bwaidx_t *RefIdx;
 const char* VersionStr = "1.0.0";
 bool bDebugMode, bPairEnd, FastQFormat, bMultiHit, bUnique;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, iInsertSize;
-char *RefSequence, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
+const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
+char *RefSequence, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName, *SJFileName;
 
 void ShowProgramUsage(const char* program)
 {
@@ -62,7 +63,7 @@ int main(int argc, char* argv[])
 	bUnique = false;
 	MaxIntronSize = 500000;
 	FastQFormat = true; // fastq:true, fasta:false
-	RefSequence = IndexFileName = ReadFileName = ReadFileName2 = SamFileName = NULL;
+	RefSequence = IndexFileName = ReadFileName = ReadFileName2 = SamFileName = SJFileName = NULL;
 
 	if (argc == 1) ShowProgramUsage(argv[0]);
 	else if (strcmp(argv[1], "index") == 0)
@@ -91,6 +92,7 @@ int main(int argc, char* argv[])
 				}
 			}
 			else if (parameter == "-o") SamFileName = argv[++i];
+			else if (parameter == "-j") SJFileName = argv[++i];
 			else if (parameter == "-pair" || parameter == "-p") bPairEnd = true;
 			else if (parameter == "-m") bMultiHit = true;
 			else if (parameter == "-unique") bUnique = true;

@@ -9,6 +9,7 @@ time_t StartProcessTime;
 bool bSepLibrary = false;
 fstream ReadFileHandler1, ReadFileHandler2;
 static pthread_mutex_t LibraryLock, OutputLock;
+map<pair<int64_t, int64_t>, SpliceJunction_t> SpliceJunctionMap;
 int iTotalReadNum = 0, iUniqueMapped = 0, iUnMapped = 0, iPaired = 0;
 
 void ShowAlignmentCandidateInfo(bool bFirstRead, char* header, vector<AlignmentCandidate_t>& AlignmentVec)
@@ -152,21 +153,18 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 
 void EvaluateMAPQ(ReadItem_t& read)
 {
-	float f;
+	int i, iMap;
 
-	//printf("read %s: score=%d, sub_score=%d\n", read.header, read.score, read.sub_score);
 	if (read.score == 0 || read.score == read.sub_score) read.mapq = 0;
 	else
 	{
 		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = 255;
 		else
 		{
-			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
-			if (read.mapq > 255) read.mapq = 255;
-			else if (read.mapq < 1) read.mapq = 1;
-
-			f = 1.0*read.score / read.rlen;
-			read.mapq = (f < 0.95 ? (int)(read.mapq * f * f) : read.mapq);
+			for (iMap = 0, i = 0; i < read.CanNum; i++)
+				if (read.AlnReportArr[i].AlnScore == read.score) iMap++;
+			if(iMap > 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
+			else read.mapq = 0;
 		}
 	}
 }
@@ -438,11 +436,58 @@ void CheckPairedFinalAlignments(ReadItem_t& read1, ReadItem_t& read2)
 	}
 }
 
+void UpdateLocalSJMap(AlignmentCandidate_t& Aln, map<pair<int64_t, int64_t>, SpliceJunction_t>& LocalSJMap)
+{
+	if (Aln.SJtype == -1) return;
+
+	int64_t g1, g2;
+	SpliceJunction_t SpliceJunction;
+	int i, num = (int)Aln.SeedVec.size();
+	map<pair<int64_t, int64_t>, SpliceJunction_t>::iterator iter;
+
+	for (i = 1; i < num; i++)
+	{
+		if (Aln.SeedVec[i].bAcceptorSite)
+		{
+			if (Aln.PosDiff < GenomeSize)
+			{
+				g1 = Aln.SeedVec[i - 1].gPos + Aln.SeedVec[i - 1].gLen;
+				g2 = Aln.SeedVec[i].gPos - 1;
+			}
+			else
+			{
+				g1 = TwoGenomeSize - Aln.SeedVec[i].gPos;
+				g2 = TwoGenomeSize - 1 - (Aln.SeedVec[i - 1].gPos + Aln.SeedVec[i - 1].gLen);
+			}
+			if ((iter = LocalSJMap.find(make_pair(g1, g2))) != LocalSJMap.end()) iter->second.iCount++;
+			else
+			{
+				SpliceJunction.iCount = 1;
+				SpliceJunction.type = Aln.SJtype;
+				LocalSJMap.insert(make_pair(make_pair(g1, g2), SpliceJunction));
+			}
+		}
+	}
+}
+
+void UpdateGlobalSJMap(map<pair<int64_t, int64_t>, SpliceJunction_t>& LocalSJMap)
+{
+	map<pair<int64_t, int64_t>, SpliceJunction_t>::iterator iter, ft;
+
+	for (iter = LocalSJMap.begin(); iter != LocalSJMap.end(); iter++)
+	{
+		ft = SpliceJunctionMap.find(iter->first);
+		if (ft != SpliceJunctionMap.end()) ft->second.iCount += iter->second.iCount;
+		else SpliceJunctionMap.insert(make_pair(iter->first, iter->second));
+	}
+}
+
 void *ReadMapping(void *arg)
 {
 	ReadItem_t* ReadArr = NULL;
 	int i, j, max_dist, ReadNum, EstDistance;
 	vector<SeedPair_t> SeedPairVec1, SeedPairVec2;
+	map<pair<int64_t, int64_t>, SpliceJunction_t> LocalSJMap;
 	vector<AlignmentCandidate_t> AlignmentVec1, AlignmentVec2;
 
 	ReadArr = new ReadItem_t[ReadChunkSize];
@@ -458,7 +503,7 @@ void *ReadMapping(void *arg)
 		{
 			for (i = 0, j = 1; i != ReadNum; i += 2, j += 2)
 			{
-				if (bDebugMode) printf("Mapping paired tags#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
+				if (bDebugMode) printf("Mapping paired reads#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
 
 				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
 				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
@@ -483,14 +528,17 @@ void *ReadMapping(void *arg)
 				SetPairedAlignmentFlag(ReadArr[i], ReadArr[j]);
 				EvaluateMAPQ(ReadArr[i]); EvaluateMAPQ(ReadArr[j]);
 
-				if (bDebugMode) printf("\nEnd of mapping for tag#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
+				if (SJFileName != NULL && ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
+				if (SJFileName != NULL && ReadArr[j].mapq == 255) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
+
+				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		else
 		{
 			for (i = 0; i != ReadNum; i++)
 			{
-				if (bDebugMode) printf("Mapping single tag#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
+				if (bDebugMode) printf("Mapping single read#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
 				//fprintf(stdout, "%s\n", ReadArr[i].header + 1); fflush(output);
 
 				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
@@ -499,7 +547,9 @@ void *ReadMapping(void *arg)
 				GenMappingReport(true, ReadArr[i], AlignmentVec1);
 				SetSingleAlignmentFlag(ReadArr[i]); EvaluateMAPQ(ReadArr[i]);
 
-				if (bDebugMode) printf("\nEnd of mapping for tag#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
+				if (SJFileName != NULL && ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
+
+				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		pthread_mutex_lock(&OutputLock);
@@ -518,25 +568,44 @@ void *ReadMapping(void *arg)
 	}
 	delete[] ReadArr;
 
+	pthread_mutex_lock(&OutputLock);
+	UpdateGlobalSJMap(LocalSJMap);
+	pthread_mutex_unlock(&OutputLock);
+
 	return (void*)(1);
 }
 
-void LoadExonInfo()
+int AbsLoc2ChrLoc(int64_t& g1, int64_t& g2)
 {
-	int exon_len;
-	int64_t gPos;
-	fstream file;
-	string chr, str;
-	stringstream ss;
+	int ChrIdx;
+	map<int64_t, int>::iterator iter;
 
-	file.open("300.error_free.exon.txt", ios_base::in);
-	while (!file.eof())
+	iter = ChrLocMap.lower_bound(g1); ChrIdx = iter->second;
+	g1 = g1 + 1 - ChromosomeVec[ChrIdx].FowardLocation;
+	g2 = g2 + 1 - ChromosomeVec[ChrIdx].FowardLocation;
+	return ChrIdx;
+}
+
+void OutputSpliceJunctions()
+{
+	bool bDir;
+	int64_t g1, g2;
+	int i, n, ChrIdx;
+	int SJtypeNum[4] = { 0, 0, 0, 0 };
+	FILE *SJFile = fopen(SJFileName, "w");
+
+	for (map<pair<int64_t, int64_t>, SpliceJunction_t>::iterator iter = SpliceJunctionMap.begin(); iter != SpliceJunctionMap.end(); iter++)
 	{
-		getline(file, str); if (str == "") break;
-		ss >> gPos >> exon_len;
-		ExonMap.insert(make_pair(gPos, exon_len));
+		g1 = iter->first.first; g2 = iter->first.second;
+		ChrIdx = AbsLoc2ChrLoc(g1, g2); //SJtypeNum[iter->second.type]++;
+		fprintf(SJFile, "%s\t%d\t%d\t%d\n", ChromosomeVec[ChrIdx].name, g1, g2, iter->second.iCount);
 	}
-	file.close();
+	if ((n = (int)SpliceJunctionMap.size()) > 0)
+	{
+		fprintf(stderr, "\nKart-RNA finds %d splice junctions (file: %s)\n", n, SJFileName);
+		//for (i = 0; i < 4; i++) fprintf(stderr, "\t%s (%.2f%%)\n", SpliceJunctionArr[i], (int)(10000 * (1.0*SJtypeNum[i] / n)) / 100.0);
+	}
+	SpliceJunctionMap.clear(); fclose(SJFile);
 }
 
 void Mapping()
@@ -558,7 +627,6 @@ void Mapping()
 		for (i = 0; i < iChromsomeNum; i++) fprintf(output, "@SQ\tSN:%s\tLN:%ld\n", ChromosomeVec[i].name, ChromosomeVec[i].len);
 	}
 
-	//LoadExonInfo();
 	//iThreadNum = 1;
 	StartProcessTime = time(NULL);
 	pthread_t *ThreadArr = new pthread_t[iThreadNum];
@@ -566,7 +634,7 @@ void Mapping()
 	for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
 
 	ReadFileHandler1.close(); if (ReadFileName2 != NULL) ReadFileHandler2.close();
-	fprintf(stderr, "\rAll the %d %s tags have been processed in %lld seconds.\n", iTotalReadNum, (bPairEnd? "paired-end":"single-end"), (long long)(time(NULL) - StartProcessTime));
+	fprintf(stderr, "\rAll the %d %s reads have been processed in %lld seconds.\n", iTotalReadNum, (bPairEnd? "paired-end":"single-end"), (long long)(time(NULL) - StartProcessTime));
 
 	if (SamFileName != NULL) fclose(output);
 
@@ -574,10 +642,11 @@ void Mapping()
 
 	if(iTotalReadNum > 0)
 	{
-		if (bPairEnd) fprintf(stderr, "\t# of total mapped tags = %d (sensitivity = %.2f%%)\n\t# of paired sequences = %d (%.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0, iPaired, (int)(10000 * (1.0*iPaired / iTotalReadNum) + 0.5) / 100.0);
-		else fprintf(stderr, "\t# of total mapped tags = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
-		fprintf(stderr, "\t# of unique mapped tags = %d (%.2f%%)\n", iUniqueMapped, (int)(10000 * (1.0*iUniqueMapped / iTotalReadNum) + 0.5) / 100.0);
-		//fprintf(stderr, "\t# of multiple mapped tags = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
-		fprintf(stderr, "\t# of unmapped tags = %d (%.2f%%)\n", iUnMapped, (int)(10000 * (1.0*iUnMapped / iTotalReadNum) + 0.5) / 100.0);
+		if (bPairEnd) fprintf(stderr, "\t# of total mapped reads = %d (sensitivity = %.2f%%)\n\t# of paired sequences = %d (%.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0, iPaired, (int)(10000 * (1.0*iPaired / iTotalReadNum) + 0.5) / 100.0);
+		else fprintf(stderr, "\t# of total mapped reads = %d (sensitivity = %.2f%%)\n", iTotalReadNum - iUnMapped, (int)(10000 * (1.0*(iTotalReadNum - iUnMapped) / iTotalReadNum) + 0.5) / 100.0);
+		fprintf(stderr, "\t# of unique mapped reads = %d (%.2f%%)\n", iUniqueMapped, (int)(10000 * (1.0*iUniqueMapped / iTotalReadNum) + 0.5) / 100.0);
+		if (!bUnique) fprintf(stderr, "\t# of multiple mapped reads = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
+		fprintf(stderr, "\t# of unmapped reads = %d (%.2f%%)\n", iUnMapped, (int)(10000 * (1.0*iUnMapped / iTotalReadNum) + 0.5) / 100.0);
 	}
+	if (SJFileName != NULL) OutputSpliceJunctions();
 }

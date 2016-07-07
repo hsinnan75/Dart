@@ -127,6 +127,7 @@ typedef struct
 typedef struct
 {
 	int Score;
+	int SJtype;
 	int64_t PosDiff;
 	int PairedAlnCanIdx;
 	vector<SeedPair_t> SeedVec;
@@ -139,6 +140,12 @@ typedef struct
 	int PairedAlnCanIdx;
 	Coordinate_t coor;
 } AlignmentReport_t;
+
+typedef struct
+{
+	int type;
+	int iCount;
+} SpliceJunction_t;
 
 typedef struct
 {
@@ -162,14 +169,15 @@ extern unsigned char nst_nt4_table[256];
 extern int64_t GenomeSize, TwoGenomeSize;
 extern vector<Chromosome_t> ChromosomeVec;
 extern vector<string> ReadVec, ReadHeaderVec;
-extern vector<int64_t> AccumulationLengthVec, PositionShiftPosVec;
+//extern vector<int64_t> AccumulationLengthVec, PositionShiftPosVec;
+extern map<pair<int64_t, int64_t>, SpliceJunction_t> SpliceJunctionMap;
 
-extern const char* VersionStr;
+extern const char *VersionStr;
+extern const char* SpliceJunctionArr[4];
 extern map<int64_t, int> ChrLocMap, ExonMap;
 extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique;
-extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
+extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName, *SJFileName;
 
-extern map<int64_t, int> SJmap;
 extern int MaxInsertSize, iThreadNum, MaxIntronSize, iInsertSize;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
 

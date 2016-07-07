@@ -4,7 +4,6 @@
 
 map<int64_t, int> ExonMap;
 static pthread_mutex_t ExonLoc;
-const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "GT/AT" };
 int ShiftArr[19] = { 0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9 };
 
 typedef struct
@@ -89,18 +88,9 @@ Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, 
 		if (bFirstRead) coor.bDir = true;
 		else coor.bDir = false;
 
-		if (iChromsomeNum == 1)
-		{
-			coor.ChromosomeIdx = 0;
-			coor.gPos = gPos + 1;
-		}
-		else
-		{
-			iter = ChrLocMap.lower_bound(gPos);
-			coor.ChromosomeIdx = iter->second;
-			coor.gPos = gPos + 1 - ChromosomeVec[coor.ChromosomeIdx].FowardLocation;
-			//if (bDebugMode) printf("matched chr=%s, loc=%ld, gPos: %ld -> %ld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].FowardLocation, gPos, coor.gPos);
-		}
+		iter = ChrLocMap.lower_bound(gPos);
+		coor.ChromosomeIdx = iter->second;
+		coor.gPos = gPos + 1 - ChromosomeVec[coor.ChromosomeIdx].FowardLocation;
 	}
 	else
 	{
@@ -109,17 +99,9 @@ Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, 
 
 		reverse(cigar_vec.begin(), cigar_vec.end());
 
-		if (iChromsomeNum == 1)
-		{
-			coor.ChromosomeIdx = 0;
-			coor.gPos = TwoGenomeSize - end_gPos;
-		}
-		else
-		{
-			iter = ChrLocMap.lower_bound(gPos);
-			coor.gPos = iter->first - end_gPos + 1; coor.ChromosomeIdx = iter->second;
-			//if(bDebugMode) printf("matched chr=%s, loc=%ld, gPos: %ld -> %ld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, gPos, coor.gPos);
-		}
+		iter = ChrLocMap.lower_bound(gPos);
+		coor.gPos = iter->first - end_gPos + 1; coor.ChromosomeIdx = iter->second;
+		//if(bDebugMode) printf("matched chr=%s, loc=%ld, gPos: %ld -> %ld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, gPos, coor.gPos);
 	}
 	if (bDebugMode) printf("gPos: %ld --> %ld %s\n", gPos, coor.gPos, (coor.bDir ? "Forward" : "Reverse"));
 
@@ -739,7 +721,7 @@ int IdentifySpliceJunction(int SJtype, SeedPair_t& left_seed, SeedPair_t& right_
 	else return shift;
 }
 
-void CheckSpliceJunction(int rlen, char* seq, uint8_t* EncodeSeq, vector<SeedPair_t>& SeedVec)
+int CheckSpliceJunction(int rlen, char* seq, uint8_t* EncodeSeq, vector<SeedPair_t>& SeedVec)
 {
 	int64_t gPos;
 	SeedPair_t seed;
@@ -797,6 +779,7 @@ void CheckSpliceJunction(int rlen, char* seq, uint8_t* EncodeSeq, vector<SeedPai
 		}
 		else printf("Cannot find SJ!!\n");
 	}
+	return best_type;
 }
 
 void RemoveTandemRepeatSeeds(vector<SeedPair_t>& SeedVec)
@@ -1066,7 +1049,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			//printf("After IdentifyMissingSeeds\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			SeedExtension(read.seq, AlignmentVec[i].SeedVec);
 			//printf("After SeedExtension\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
-			CheckSpliceJunction(read.rlen, read.seq, read.EncodeSeq, AlignmentVec[i].SeedVec);
+			AlignmentVec[i].SJtype = CheckSpliceJunction(read.rlen, read.seq, read.EncodeSeq, AlignmentVec[i].SeedVec);
 			//printf("After CheckSpliceJunction\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			IdentifyNormalPairs(read.rlen, read.seq, AlignmentVec[i].SeedVec); // fill missing framgment pairs between simple pairs
 			//printf("After IdentifyNormalPairs\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
