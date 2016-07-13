@@ -623,7 +623,7 @@ void Mapping()
 	if (bDebugMode) iThreadNum = 1;
 	else
 	{
-		fprintf(output, "@PG\tPN:Kart\tVN:%s\n", VersionStr);
+		fprintf(output, "@PG\tPN:Kart-RNA\tVN:%s\n", VersionStr);
 		for (i = 0; i < iChromsomeNum; i++) fprintf(output, "@SQ\tSN:%s\tLN:%ld\n", ChromosomeVec[i].name, ChromosomeVec[i].len);
 	}
 
