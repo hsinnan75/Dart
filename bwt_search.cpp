@@ -140,8 +140,8 @@ bwtint_t bwt_sa(bwtint_t k)
 bwtSearchResult_t BWT_Search(uint8_t* seq, int start, int stop)
 {
 	int i, j, pos, p;
+	bwtintv_t ik, ok[4];
 	bwtint_t tk[4], tl[4];
-	bwtintv_t uk, ik, ok[4];
 	bwtSearchResult_t bwtSearchResult;
 
 	p = (int)seq[start];
@@ -167,36 +167,14 @@ bwtSearchResult_t BWT_Search(uint8_t* seq, int start, int stop)
 
 		i = 3 - seq[pos];
 		if (ok[i].x[2] == 0) break; // extension ends
-		else
-		{
-			if (bwtSearchResult.len == 0 && ok[i].x[2] == 1)
-			{
-				// keep this status
-				uk = ik;
-				bwtSearchResult.len = pos - start;
-			}
-			ik = ok[i];
-		}
+		else ik = ok[i];
 	}
 	//printf("MaxSeedLen=%d, freq=%d\n", pos - start, ik.x[2]);
-	if (ik.x[2] <= OCC_Thr)
+	if (ik.x[2] <= OCC_Thr && (bwtSearchResult.len = pos - start) >= 16)
 	{
-		//printf("MaxSeedLen=%d, UniqueLength=%d\n", pos - start, bwtSearchResult.len);
-		if (bwtSearchResult.len == 0 || (bwtSearchResult.len != 0 && (pos - start) - bwtSearchResult.len > 3))
-		{
-			if ((bwtSearchResult.len = pos - start) >= 16)
-			{
-				bwtSearchResult.freq = (int)ik.x[2];
-				bwtSearchResult.LocArr = new bwtint_t[bwtSearchResult.freq];
-				for (j = 0; j < bwtSearchResult.freq; j++) bwtSearchResult.LocArr[j] = bwt_sa(ik.x[0] + j);
-			}
-		}
-		else if(bwtSearchResult.len >= 16)
-		{
-			bwtSearchResult.freq = (int)uk.x[2];
-			bwtSearchResult.LocArr = new bwtint_t[bwtSearchResult.freq];
-			for (j = 0; j < bwtSearchResult.freq; j++) bwtSearchResult.LocArr[j] = bwt_sa(uk.x[0] + j);
-		}
+		bwtSearchResult.freq = (int)ik.x[2];
+		bwtSearchResult.LocArr = new bwtint_t[bwtSearchResult.freq];
+		for (j = 0; j < bwtSearchResult.freq; j++) bwtSearchResult.LocArr[j] = bwt_sa(ik.x[0] + j);
 	}
 	else bwtSearchResult.freq = 0;
 
