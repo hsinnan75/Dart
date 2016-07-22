@@ -1058,10 +1058,14 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 				printf("Process candidate#%d (Score = %d, SegmentPair#=%d): \n", i + 1, AlignmentVec[i].Score, (int)AlignmentVec[i].SeedVec.size());
 				ShowSeedInfo(AlignmentVec[i].SeedVec);
 			}
-			if (CheckCoordinateValidity(AlignmentVec[i].SeedVec) == false) continue;
-
+			num = (int)AlignmentVec[i].SeedVec.size();
+			if (num > 1 && CheckCoordinateValidity(AlignmentVec[i].SeedVec) == false)
+			{
+				if (bDebugMode) printf("CheckCoordinateValidity fails!\n");
+				continue;
+			}
 			cigar_vec.clear();
-			for (num = (int)AlignmentVec[i].SeedVec.size(), j = 0; j != num; j++)
+			for (j = 0; j != num; j++)
 			{
 				if (AlignmentVec[i].SeedVec[j].rLen == 0 && AlignmentVec[i].SeedVec[j].gLen == 0) continue;
 				else

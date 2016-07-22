@@ -172,11 +172,12 @@ extern vector<string> ReadVec, ReadHeaderVec;
 //extern vector<int64_t> AccumulationLengthVec, PositionShiftPosVec;
 extern map<pair<int64_t, int64_t>, SpliceJunction_t> SpliceJunctionMap;
 
+extern char SJFileName[256];
 extern const char *VersionStr;
 extern const char* SpliceJunctionArr[4];
 extern map<int64_t, int> ChrLocMap, ExonMap;
 extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique;
-extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName, *SJFileName;
+extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
 extern int MaxInsertSize, iThreadNum, MaxIntronSize, iInsertSize;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
