@@ -116,12 +116,12 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "\n");
 			fprintf(stderr, "Kart-RNA v%s\n", VersionStr);
 			fprintf(stderr, "Usage: %s aln [-i IndexFile Prefix] -f|-q ReadFile [-f2|-q2 ReadFile2] > out.sam\n\n", argv[0]);
-			fprintf(stderr, "Options: -t INT\t	number of threads [16]\n");
-			fprintf(stderr, "         -f            files with #1 mates reads\n");
-			fprintf(stderr, "         -f2           files with #2 mates reads\n");
-			fprintf(stderr, "         -m            output multiple alignments\n");
-			fprintf(stderr, "         -unique       output uniquely mapped alignments\n");
-			fprintf(stderr, "         -p	\t	paired-end reads are interlaced in the same file\n");
+			fprintf(stderr, "Options: -t INT       number of threads [16]\n");
+			fprintf(stderr, "         -f           files with #1 mates reads\n");
+			fprintf(stderr, "         -f2          files with #2 mates reads\n");
+			fprintf(stderr, "         -m           output multiple alignments\n");
+			fprintf(stderr, "         -unique      output uniquely mapped alignments\n");
+			fprintf(stderr, "         -p           paired-end reads are interlaced in the same file\n");
 			fprintf(stderr, "\n");
 			exit(0);
 		}
