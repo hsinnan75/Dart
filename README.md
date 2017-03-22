@@ -3,7 +3,7 @@ Kart-RNA: a fast and accurate RNA-seq mapper with divide and conquer strategy
 Developers: Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu Institute of Information Science, Academia Sinica, Taiwan.
 
 Introduction
-Kart-RNA is a read aligner for NGS RNA-Seq data developed by Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu. Kart-RNA supports single-end and paired-end reads and multi-thread alignments. We describe the installation and Running instructions of Kart below.
+Kart-RNA is a read aligner for NGS RNA-Seq data developed by Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu. Kart-RNA supports single-end and paired-end reads and multi-thread alignments. We describe the installation and Running instructions of Kart-RNA below.
 
 Instructions
 1.Installation
@@ -18,7 +18,7 @@ Ex. #./kart-rna index -p ecoli Ecoli.fa
 
 The above command is to index the genome file Ecoli.fa and store the index files begining with ecoli.
 
-For mapping short reads, Kart requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
+For mapping short reads, Kart-RNA requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
 
 Ex. #./kart-rna aln -i ecoli -f ReadFile1.fq -f2 ReadFile2.fq -o out.sam
 
