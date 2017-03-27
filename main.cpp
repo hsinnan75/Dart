@@ -1,4 +1,5 @@
 #include "structure.h"
+#include <sys/stat.h>
 
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
@@ -47,7 +48,39 @@ bool CheckReadFile(char* filename, bool bFirst)
 	}
 	file.close();
 
+	if (!bCheck) fprintf(stderr, "Read file: %s cannot be accessed or with incompatible format!\n", filename);
+
 	return bCheck;
+}
+
+bool CheckSamFileName()
+{
+	struct stat s;
+	bool bRet = true;
+
+	if (stat(SamFileName, &s) == 0)
+	{
+		if (s.st_mode & S_IFDIR)
+		{
+			bRet = false;
+			fprintf(stderr, "Warning: %s is a directory!\n", SamFileName);
+		}
+		else if (s.st_mode & S_IFREG)
+		{
+			//it's a file
+		}
+		else
+		{
+			bRet = false;
+			fprintf(stderr, "Warning: %s is not a regular file!\n", SamFileName);
+		}
+	}
+	else
+	{
+		bRet = false;
+		fprintf(stderr, "Warning: %s is not a regular file!\n", SamFileName);
+	}
+	return bRet;
 }
 
 int main(int argc, char* argv[])
@@ -125,8 +158,9 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "\n");
 			exit(0);
 		}
-		if (CheckReadFile(ReadFileName, true) == false) fprintf(stderr, "Cannot open the read file: %s\n", ReadFileName), exit(0);
-		if (ReadFileName2 != NULL && CheckReadFile(ReadFileName2, false) == false) fprintf(stderr, "Read file: %s cannot be accessed or with incompatible format!\n", ReadFileName2), exit(0);
+		if (CheckReadFile(ReadFileName, true) == false) exit(0);
+		if (ReadFileName2 != NULL && CheckReadFile(ReadFileName2, false) == false) exit(0);
+		if (SamFileName != NULL && CheckSamFileName() == false) exit(0);
 
 		if (CheckBWAIndexFiles(IndexFileName)) RefIdx = bwa_idx_load(IndexFileName);
 		else RefIdx = 0;
