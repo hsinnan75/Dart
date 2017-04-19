@@ -278,14 +278,13 @@ void OutputSingledSamFile(ReadItem_t& read)
 
 void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
 {
-	int thr;
+	bool bAmbiguous = false;
+	int thr, score1, score2;
 	vector<AlignmentCandidate_t>::iterator iter;
 
 	if (AlignmentVec.size() <= 1) return;
 	else
 	{
-		int score1, score2;
-
 		score1 = score2 = 0;
 		for (iter = AlignmentVec.begin(); iter != AlignmentVec.end(); iter++)
 		{
@@ -300,12 +299,15 @@ void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
 			}
 			else if (iter->Score == score2) score2 = score1;
 		}
+		//if (score1 == score2) bAmbiguous = true;
+
 		if (score1 == score2 || score1 - score2 > 20) thr = score1;
 		else thr = score2;
 
 		if (bDebugMode) printf("Candidate score threshold = %d\n", thr);
 		for (iter = AlignmentVec.begin(); iter != AlignmentVec.end(); iter++) if (iter->Score < thr) iter->Score = 0;
 	}
+	//return bAmbiguous;
 }
 
 bool CheckPairedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2)
@@ -484,6 +486,7 @@ void UpdateGlobalSJMap(map<pair<int64_t, int64_t>, SpliceJunction_t>& LocalSJMap
 
 void *ReadMapping(void *arg)
 {
+	bool bAmb1, bAmb2;
 	ReadItem_t* ReadArr = NULL;
 	int i, j, max_dist, ReadNum, EstDistance;
 	vector<SeedPair_t> SeedPairVec1, SeedPairVec2;
@@ -503,7 +506,7 @@ void *ReadMapping(void *arg)
 		{
 			for (i = 0, j = 1; i != ReadNum; i += 2, j += 2)
 			{
-				if (bDebugMode) printf("Mapping paired reads#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
+				//if (bDebugMode) printf("Mapping paired reads#%d %s (len=%d) and %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen, ReadArr[j].header + 1, ReadArr[j].rlen);
 
 				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
 				AlignmentVec1 = GenerateAlignmentCandidate(ReadArr[i].rlen, SeedPairVec1);
@@ -512,14 +515,27 @@ void *ReadMapping(void *arg)
 				AlignmentVec2 = GenerateAlignmentCandidate(ReadArr[j].rlen, SeedPairVec2);
 
 				//if (bDebugMode) ShowAlignmentCandidateInfo(true, ReadArr[i].header+1, AlignmentVec1), ShowAlignmentCandidateInfo(false, ReadArr[j].header+1, AlignmentVec2);
-				if (CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2)) RemoveUnMatedAlignmentCandidates(AlignmentVec1, AlignmentVec2);
-				RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);
-
-				if (bDebugMode)
+				if (CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2))
 				{
-					ShowAlignmentCandidateInfo(1, ReadArr[i].header + 1, AlignmentVec1);
-					ShowAlignmentCandidateInfo(0, ReadArr[j].header + 1, AlignmentVec2);
+					RemoveUnMatedAlignmentCandidates(AlignmentVec1, AlignmentVec2);
 				}
+				//else 
+				//{
+				//	AlignmentVec1.clear();
+				//	AlignmentVec2.clear();
+				//}
+				RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);
+				
+				//if (bAmb1 || bAmb2)
+				//{
+				//	AlignmentVec1.clear();
+				//	AlignmentVec2.clear();
+				//}
+				//if (bDebugMode)
+				//{
+				//	ShowAlignmentCandidateInfo(1, ReadArr[i].header + 1, AlignmentVec1);
+				//	ShowAlignmentCandidateInfo(0, ReadArr[j].header + 1, AlignmentVec2);
+				//}
 				GenMappingReport(true,  ReadArr[i], AlignmentVec1);
 				GenMappingReport(false, ReadArr[j], AlignmentVec2);
 
@@ -531,14 +547,14 @@ void *ReadMapping(void *arg)
 				if (SJFileName != NULL && ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
 				if (SJFileName != NULL && ReadArr[j].mapq == 255) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
 
-				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
+				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		else
 		{
 			for (i = 0; i != ReadNum; i++)
 			{
-				if (bDebugMode) printf("Mapping single read#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
+				//if (bDebugMode) printf("Mapping single read#%d %s (len=%d):\n", i + 1, ReadArr[i].header + 1, ReadArr[i].rlen);
 				//fprintf(stdout, "%s\n", ReadArr[i].header + 1); fflush(output);
 
 				SeedPairVec1 = IdentifySeedPairs(ReadArr[i].rlen, ReadArr[i].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec1);
@@ -549,7 +565,7 @@ void *ReadMapping(void *arg)
 
 				if (SJFileName != NULL && ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
 
-				if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
+				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
 		pthread_mutex_lock(&OutputLock);
