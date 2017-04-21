@@ -12,7 +12,7 @@ char *RefSequence, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
 void ShowProgramUsage(const char* program)
 {
-	fprintf(stderr, "\nKart-RNA v%s [Developers: Hsin-Nan Lin and Wen-Lian Hsu]\n\n", VersionStr);
+	fprintf(stderr, "\nDART v%s [Developers: Hsin-Nan Lin and Wen-Lian Hsu]\n\n", VersionStr);
 	fprintf(stderr, "Usage: %s aln|index\n\n", program);
 	fprintf(stderr, "Command: index		index the reference sequences with FASTA format\n");
 	fprintf(stderr, "         aln		read alignment\n");
@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 		if (IndexFileName == NULL || ReadFileName == NULL)
 		{
 			fprintf(stderr, "\n");
-			fprintf(stderr, "Kart-RNA v%s\n", VersionStr);
+			fprintf(stderr, "DART v%s\n", VersionStr);
 			fprintf(stderr, "Usage: %s aln [-i IndexFile Prefix] -f|-q ReadFile [-f2|-q2 ReadFile2] > out.sam\n\n", argv[0]);
 			fprintf(stderr, "Options: -t INT       number of threads [16]\n");
 			fprintf(stderr, "         -f           files with #1 mates reads\n");

@@ -618,7 +618,7 @@ void OutputSpliceJunctions()
 	}
 	if ((n = (int)SpliceJunctionMap.size()) > 0)
 	{
-		fprintf(stderr, "\nKart-RNA finds %d splice junctions (file: %s)\n", n, SJFileName);
+		fprintf(stderr, "\nFound %d splice junctions (file: %s)\n", n, SJFileName);
 		//for (i = 0; i < 4; i++) fprintf(stderr, "\t%s (%.2f%%)\n", SpliceJunctionArr[i], (int)(10000 * (1.0*SJtypeNum[i] / n)) / 100.0);
 	}
 	SpliceJunctionMap.clear(); fclose(SJFile);
@@ -639,7 +639,7 @@ void Mapping()
 	if (bDebugMode) iThreadNum = 1;
 	else
 	{
-		fprintf(output, "@PG\tPN:Kart-RNA\tVN:%s\n", VersionStr);
+		fprintf(output, "@PG\tPN:Dart\tVN:%s\n", VersionStr);
 		for (i = 0; i < iChromsomeNum; i++) fprintf(output, "@SQ\tSN:%s\tLN:%ld\n", ChromosomeVec[i].name, ChromosomeVec[i].len);
 	}
 
