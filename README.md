@@ -1,9 +1,9 @@
-Kart-RNA: a fast and accurate RNA-seq mapper with divide and conquer strategy
+DART: a fast and accurate RNA-seq mapper with divide and conquer strategy
 
 Developers: Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu Institute of Information Science, Academia Sinica, Taiwan.
 
 Introduction
-Kart-RNA is a read aligner for NGS RNA-Seq data developed by Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu. Kart-RNA supports single-end and paired-end reads and multi-thread alignments. We describe the installation and Running instructions of Kart-RNA below.
+DART is a read aligner for NGS RNA-Seq data developed by Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu. DART supports single-end and paired-end reads and multi-thread alignments. We describe the installation and Running instructions of DART below.
 
 Instructions
 1.Installation
@@ -12,17 +12,17 @@ We provide the executable file, please type './kart-rna' to run the program. Or 
 
 2.Usage
 
-For indexing a reference genome, Kart-RNA requires the target genome file (in fasta format) and the prefix of the index files (including the directory path).
+For indexing a reference genome, DART requires the target genome file (in fasta format) and the prefix of the index files (including the directory path).
 
-Ex. #./kart-rna index -p ecoli Ecoli.fa
+Ex. #./dart index -p ecoli Ecoli.fa
 
 The above command is to index the genome file Ecoli.fa and store the index files begining with ecoli.
 
-For mapping short reads, Kart-RNA requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
+For mapping short reads, DART requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
 
-Ex. #./kart-rna aln -i ecoli -f ReadFile1.fq -f2 ReadFile2.fq -o out.sam
+Ex. #./dart aln -i ecoli -f ReadFile1.fq -f2 ReadFile2.fq -o out.sam
 
-The above command is to run Kart-RNA to align the paired-end reads in ReadFile1.fq and ReadFile2.fq with index files of ecoli. The output is redirected to out.sam.
+The above command is to run DART to align the paired-end reads in ReadFile1.fq and ReadFile2.fq with index files of ecoli. The output is redirected to out.sam.
 
 3.File formats
 
