@@ -8,7 +8,7 @@ DART is a read aligner for NGS RNA-Seq data developed by Dr. Hsin-Nan Lin and Dr
 Instructions
 1.Installation
 
-We provide the executable file, please type './kart-rna' to run the program. Or you can type 'make' to build the executable file.
+We provide the executable file, please type './dart' to run the program. Or you can type 'make' to build the executable file.
 
 2.Usage
 
