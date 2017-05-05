@@ -1,4 +1,4 @@
-DART: a fast and accurate RNA-seq mapper with divide and conquer strategy
+DART: a fast and accurate RNA-seq mapper with a divide and conquer strategy
 ===================
 
 Developers: Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu Institute of Information Science, Academia Sinica, Taiwan.
