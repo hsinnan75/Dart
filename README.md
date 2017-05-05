@@ -4,10 +4,11 @@ DART: a fast and accurate RNA-seq mapper with a divide and conquer strategy
 Developers: Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu Institute of Information Science, Academia Sinica, Taiwan.
 
 # Introduction
-DART is a read aligner for NGS RNA-Seq data developed by Dr. Hsin-Nan Lin and Dr. Wen-Lian Hsu. DART supports single-end and paired-end reads and multi-thread alignments. We describe the installation and Running instructions of DART below.
+RNA-Seq technology can provide high resolution measurement of expression and high sensitivity in detecting low abundance transcripts. However, RNA-seq data requires a huge amount of computational efforts since this technology can produce sequence reads on the order of million/billion base-pairs in a single day. The very first step is to align each sequence fragment against the reference genome.
 
-# Instructions
-1.Installation
+DART adopts a divide-and-conquer strategy to handle RNA-Seq transcript alignments. Unlike most of read aligners that try to ex-tend a seed in both directions with a dynamic programming step, DART divides a read sequence into one or more segments to re-place the seed extension step. The experiment results on synthetic datasets and real datasets show that DART is a highly efficient aligner that yields the highest sensitivity and accuracy and spends the least amount of time among the selected aligners.
+
+# Installation
 
 We provide the executable file, please type 
 
