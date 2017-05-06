@@ -8,6 +8,14 @@ RNA-Seq technology can provide high resolution measurement of expression and hig
 
 DART adopts a divide-and-conquer strategy to handle RNA-Seq transcript alignments. Unlike most of read aligners that try to ex-tend a seed in both directions with a dynamic programming step, DART divides a read sequence into one or more segments to re-place the seed extension step. The experiment results on synthetic datasets and real datasets show that DART is a highly efficient aligner that yields the highest sensitivity and accuracy and spends the least amount of time among the selected aligners.
 
+# Download
+
+Please use the command 
+  ```
+  $ git clone https://github.com/hsinnan75/DART
+  ```
+to download the package of DART.
+
 # Installation
 
 We provide the executable file, please type 
