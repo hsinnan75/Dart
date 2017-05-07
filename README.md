@@ -12,7 +12,7 @@ DART adopts a divide-and-conquer strategy to handle RNA-Seq transcript alignment
 
 Please use the command 
   ```
-  $ git clone https://github.com/hsinnan75/DART
+  $ git clone https://github.com/hsinnan75/Dart.git
   ```
 to download the package of DART.
 
