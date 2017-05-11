@@ -55,9 +55,11 @@ The above command is to run DART to align the paired-end reads in ReadFile1.fq a
 
     If paired-end reads are separated into two files, use -f and -f2 to indicate the two filenames. The i-th reads in the two files are paired. If paired-end reads are in the same file, use -p. The first and second reads are paired, the third and fourth reads are paired, and so on. For the latter case, use -p to indicate the input file contains paired-end reads.
 
-- c.Output file
+- c.Output files
 
     Output is in standard SAM format. For reads aligned with reverse strand of reference genome, they are converted into obverse strand. More detailed information about SAM format, please refer to the SAMtools documents.
+    
+    We also output the predicted splice junctions (junctions.tab as the default filename or you may specify a filename with -j)
 
 # Parameter setting
 
@@ -74,6 +76,8 @@ The above command is to run DART to align the paired-end reads in ReadFile1.fq a
 -p the input read file consists of interleaved paired-end sequences
 
 -o STR alignment output
+
+-j STR predicted splice junction filename [junctions.tab]
 
 -m output multiple alignments
 
