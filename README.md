@@ -59,7 +59,7 @@ The above command is to run DART to align the paired-end reads in ReadFile1.fq a
 
     Output is in standard SAM format. For reads aligned with reverse strand of reference genome, they are converted into obverse strand. More detailed information about SAM format, please refer to the SAMtools documents.
     
-    We also output the predicted splice junctions (junctions.tab as the default filename or you may specify a filename with -j)
+    We also output the predicted splice junctions (default: junctions.tab, or you may specify a filename with -j ).
 
 # Parameter setting
 
