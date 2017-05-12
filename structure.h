@@ -179,7 +179,7 @@ extern map<int64_t, int> ChrLocMap, ExonMap;
 extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique;
 extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
-extern int MaxInsertSize, iThreadNum, MaxIntronSize, iInsertSize;
+extern int iThreadNum, MaxIntronSize;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
 
 // bwt_index.cpp

@@ -5,8 +5,8 @@ bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
 const char* VersionStr = "1.0.0";
+int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize;
 bool bDebugMode, bPairEnd, FastQFormat, bMultiHit, bUnique;
-int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, iInsertSize;
 const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
 char *RefSequence, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
 
@@ -84,7 +84,6 @@ int main(int argc, char* argv[])
 	string parameter, str;
 
 	MaxGaps = 5;
-	iInsertSize = 700;
 	iThreadNum = 16;
 	bPairEnd = false;
 	bDebugMode = false;
@@ -131,10 +130,10 @@ int main(int argc, char* argv[])
 			{
 				if ((MaxIntronSize = atoi(argv[++i])) < 100000) MaxIntronSize = 100000;
 			}
-			else if (parameter == "-ins")
-			{
-				if ((MaxInsertSize = atoi(argv[++i])) < 500) MaxInsertSize = 500;
-			}
+			//else if (parameter == "-ins")
+			//{
+			//	if ((MaxInsertSize = atoi(argv[++i])) < 500) MaxInsertSize = 500;
+			//}
 			else if (parameter == "-d" || parameter == "-debug") bDebugMode = true;
 			else fprintf(stderr, "Warning! Unknow parameter: %s\n", argv[i]);
 		}
@@ -148,10 +147,11 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "         -f           files with #1 mates reads\n");
 			fprintf(stderr, "         -f2          files with #2 mates reads\n");
 			fprintf(stderr, "         -m           output multiple alignments\n");
-			fprintf(stderr, "         -unique      output uniquely mapped alignments\n");
 			fprintf(stderr, "         -o           sam output filename\n");
 			fprintf(stderr, "         -j           splice junction output filename\n");
 			fprintf(stderr, "         -p           paired-end reads are interlaced in the same file\n");
+			fprintf(stderr, "         -intron      the maximal intron size [500000]\n");
+			fprintf(stderr, "         -unique      output uniquely mapped alignments\n");
 			fprintf(stderr, "\n");
 			exit(0);
 		}

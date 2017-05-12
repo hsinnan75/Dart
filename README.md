@@ -81,6 +81,8 @@ The above command is to run DART to align the paired-end reads in ReadFile1.fq a
 
 -m output multiple alignments
 
+-intron INT the maximal intron size [500000]
+
 -unique output unique alignments
 
   ```
