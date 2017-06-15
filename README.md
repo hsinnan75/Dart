@@ -21,7 +21,7 @@ to download the package of DART.
 We provide the executable file, please type 
 
   ```
-  $ ./dart index | aln [options]
+  $ ./dart [options]
   ```
 to run the program. Or you can type 'make' to build the executable file.
 
@@ -30,18 +30,33 @@ to run the program. Or you can type 'make' to build the executable file.
 For indexing a reference genome, DART requires the target genome file (in fasta format) and the prefix of the index files (including the directory path).
 
   ```
-  $ ./dart index -p ecoli Ecoli.fa
+  $ ./bwa_index ref_file[ex.ecoli.fa] index_prefix[ex. Ecoli]
   ```
-
 The above command is to index the genome file Ecoli.fa and store the index files begining with ecoli.
+
+Please note that if you find bwa_index does not work in your computer system, you may use bwa (http://bio-bwa.sourceforge.net/) to build the index files.
+  ```
+  $ ./bwa index -p index_prefix xxxx.fa
+  ```
 
 For mapping short reads, DART requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
 
+ case 1: standard sam output
   ```
-  $ ./dart aln -i ecoli -f ReadFile1.fq -f2 ReadFile2.fq -o out.sam
+ $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.sam
   ```
 
-The above command is to run DART to align the paired-end reads in ReadFile1.fq and ReadFile2.fq with index files of ecoli. The output is redirected to out.sam.
+ case 2: gzip compressed output
+  ```
+ $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.sam.gz
+  ```
+
+ case 3: bam output
+  ```
+ $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa | samtools view -bo out.bam
+  ```
+
+The above commands are to run DART to align the paired-end reads in ReadFile1.fq and ReadFile2.fq with index files of ecoli.
 
 # File formats
 
@@ -51,7 +66,8 @@ The above command is to run DART to align the paired-end reads in ReadFile1.fq a
 
 - Read files
 
-    All reads files should be in FASTA or FASTQ format. Read sequences should be capital letters. The quality scores in FASTQ are not considered in the alignments. The alignment result will not be different in either format.
+    All reads files should be in FASTA or FASTQ format. FASTQ files can be compressed with gzip format. We do not support FASTA files with gzip compression.
+    Read sequences should be capital letters. The quality scores in FASTQ are not considered in the alignments. The alignment result will not be different in either format.
 
     If paired-end reads are separated into two files, use -f and -f2 to indicate the two filenames. The i-th reads in the two files are paired. If paired-end reads are in the same file, use -p. The first and second reads are paired, the third and fourth reads are paired, and so on. For the latter case, use -p to indicate the input file contains paired-end reads.
 
@@ -59,7 +75,7 @@ The above command is to run DART to align the paired-end reads in ReadFile1.fq a
 
     Output is in standard SAM format. For reads aligned with reverse strand of reference genome, they are converted into obverse strand. More detailed information about SAM format, please refer to the SAMtools documents.
     
-    We also output the predicted splice junctions (default: junctions.tab, or you may specify a filename with -j ).
+    We also output the predicted splice junctions (default: junctions.tab, or you may specify a filename with -j argument).
 
 # Parameter setting
 
