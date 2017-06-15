@@ -164,13 +164,15 @@ void EvaluateMAPQ(ReadItem_t& read)
 	if (read.score == 0 || read.score == read.sub_score) read.mapq = 0;
 	else
 	{
-		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = 255;
+		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = 60;
 		else
 		{
-			for (iMap = 0, i = 0; i < read.CanNum; i++)
-				if (read.AlnReportArr[i].AlnScore == read.score) iMap++;
-			if(iMap > 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
-			else read.mapq = 0;
+			//for (iMap = 0, i = 0; i < read.CanNum; i++)
+			//	if (read.AlnReportArr[i].AlnScore == read.score) iMap++;
+			//if(iMap > 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
+			//else read.mapq = 0;
+			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
+			if (read.mapq > 60) read.mapq = 60;
 		}
 	}
 }
