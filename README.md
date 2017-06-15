@@ -10,7 +10,7 @@ DART adopts a divide-and-conquer strategy to handle RNA-Seq transcript alignment
 
 # Download
 
-Please use the command 
+Current version: 1.1.0. Please use the command 
   ```
   $ git clone https://github.com/hsinnan75/Dart.git
   ```
