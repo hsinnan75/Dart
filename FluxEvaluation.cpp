@@ -56,10 +56,7 @@ int main(int argc, char* argv[])
 		
 		if (CIGAR == "*") iEmpty++;
 		else if (mapq == 0) iLowHAPQ++;
-		else if (p_chr == r_chr && gPos >= left_gPos && gPos <= right_gPos)
-		{
-			iCor++;
-		}
+		else if (p_chr == r_chr && gPos >= left_gPos && gPos <= right_gPos) iCor++;
 		//else printf("chr[%s - %s], gPos=%lld [%lld-%lld]\n", p_chr.c_str(), r_chr.c_str(), gPos, left_gPos, right_gPos);
 
 		if (iTotal % 100000 == 0)

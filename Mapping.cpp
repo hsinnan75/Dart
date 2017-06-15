@@ -3,6 +3,7 @@
 #include "structure.h"
 
 #define MAPQ_COEF 30
+#define Max_MAPQ  60
 
 gzFile gzOutput;
 //char buffer[4096];
@@ -164,7 +165,7 @@ void EvaluateMAPQ(ReadItem_t& read)
 	if (read.score == 0 || read.score == read.sub_score) read.mapq = 0;
 	else
 	{
-		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = 60;
+		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = Max_MAPQ;
 		else
 		{
 			//for (iMap = 0, i = 0; i < read.CanNum; i++)
@@ -172,7 +173,7 @@ void EvaluateMAPQ(ReadItem_t& read)
 			//if(iMap > 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
 			//else read.mapq = 0;
 			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
-			if (read.mapq > 60) read.mapq = 60;
+			if (read.mapq > Max_MAPQ) read.mapq = Max_MAPQ;
 		}
 	}
 }
@@ -567,8 +568,8 @@ void *ReadMapping(void *arg)
 				SetPairedAlignmentFlag(ReadArr[i], ReadArr[j]);
 				EvaluateMAPQ(ReadArr[i]); EvaluateMAPQ(ReadArr[j]);
 
-				if (ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
-				if (ReadArr[j].mapq == 255) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
+				if (ReadArr[i].mapq == Max_MAPQ) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
+				if (ReadArr[j].mapq == Max_MAPQ) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
 
 				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
@@ -586,7 +587,7 @@ void *ReadMapping(void *arg)
 				GenMappingReport(true, ReadArr[i], AlignmentVec1);
 				SetSingleAlignmentFlag(ReadArr[i]); EvaluateMAPQ(ReadArr[i]);
 
-				if (SJFileName != NULL && ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
+				if (SJFileName != NULL && ReadArr[i].mapq == Max_MAPQ) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
 
 				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
