@@ -4,10 +4,13 @@
 
 #define MAPQ_COEF 30
 
+gzFile gzOutput;
+//char buffer[4096];
 FILE *output = stdout;
 time_t StartProcessTime;
 bool bSepLibrary = false;
-fstream ReadFileHandler1, ReadFileHandler2;
+FILE *ReadFileHandler1, *ReadFileHandler2;
+gzFile gzReadFileHandler1, gzReadFileHandler2;
 static pthread_mutex_t LibraryLock, OutputLock;
 map<pair<int64_t, int64_t>, SpliceJunction_t> SpliceJunctionMap;
 int iTotalReadNum = 0, iUniqueMapped = 0, iUnMapped = 0, iPaired = 0;
@@ -40,8 +43,9 @@ void SetSingleAlignmentFlag(ReadItem_t& read)
 {
 	int i;
 
-	if ((read.score > read.sub_score && ++iUniqueMapped) || bMultiHit == false) // unique mapping or bMultiHit=false
+	if (read.score > read.sub_score) // unique mapping or bMultiHit=false
 	{
+		iUniqueMapped++;
 		i = read.iBestAlnCanIdx;
 		if (read.AlnReportArr[i].coor.bDir == false) read.AlnReportArr[i].iFrag = 0x10;
 		else read.AlnReportArr[i].iFrag = 0;
@@ -87,8 +91,9 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 	}
 	else
 	{
-		if ((read1.score > read1.sub_score && ++iUniqueMapped) || bMultiHit == false) // unique mapping or bMultiHit=false
+		if (read1.score > read1.sub_score) // unique mapping
 		{
+			iUniqueMapped++;
 			i = read1.iBestAlnCanIdx;
 			read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
 			read1.AlnReportArr[i].iFrag |= (read1.AlnReportArr[i].coor.bDir ? 0x20 : 0x10);
@@ -118,8 +123,9 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 			else read1.AlnReportArr[0].iFrag |= (read2.AlnReportArr[read2.iBestAlnCanIdx].coor.bDir ? 0x10 : 0x20);
 		}
 
-		if ((read2.score > read2.sub_score && ++iUniqueMapped) || bMultiHit == false) // unique mapping or bMultiHit=false
+		if (read2.score > read2.sub_score) // unique mapping
 		{
+			iUniqueMapped++;
 			j = read2.iBestAlnCanIdx;
 			read2.AlnReportArr[j].iFrag = 0x81; // read2 is the second read in a pair
 			read2.AlnReportArr[j].iFrag |= (read2.AlnReportArr[j].coor.bDir ? 0x20 : 0x10);
@@ -169,15 +175,20 @@ void EvaluateMAPQ(ReadItem_t& read)
 	}
 }
 
-void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
+void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2)
 {
 	char *seq, *rseq;
-	int i, j, dist = 0;
+	char* buffer = NULL;
+	int i, j, len, dist = 0;
 
-	if (read1.score == 0 || (bUnique && read1.mapq == 0))
+	buffer = (char*)malloc((200 + read1.rlen + (read1.rlen >> 1)));
+	if (read1.score == 0)
 	{
 		iUnMapped++;
-		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header, read1.AlnReportArr[0].iFrag, read1.seq);
+		len = sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header, read1.AlnReportArr[0].iFrag, read1.seq);
+
+		if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		else gzwrite(gzOutput, buffer, len);
 	}
 	else
 	{
@@ -195,9 +206,12 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 				{
 					dist = (int)(read2.AlnReportArr[j].coor.gPos - read1.AlnReportArr[i].coor.gPos + (read1.AlnReportArr[i].coor.bDir ? read2.rlen : 0 - read1.rlen));
 					if (i == read1.iBestAlnCanIdx) iPaired += 2;
-					fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), read2.AlnReportArr[j].coor.gPos, dist, (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
+					len = sprintf(buffer, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), read2.AlnReportArr[j].coor.gPos, dist, (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
 				}
-				else fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
+				else len = sprintf(buffer, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
+
+				if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+				else gzwrite(gzOutput, buffer, len);;
 			}
 			if (!bMultiHit) break;
 		}
@@ -207,11 +221,16 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 			rseq = NULL;
 		}
 	}
+	free(buffer);
 
-	if (read2.score == 0 || (bUnique && read2.mapq == 0))
+	buffer = (char*)malloc((200 + read2.rlen + (read2.rlen >> 1)));
+	if (read2.score == 0)
 	{
 		iUnMapped++;
-		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header, read2.AlnReportArr[0].iFrag, read2.seq);
+		len = sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header, read2.AlnReportArr[0].iFrag, read2.seq);
+
+		if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		else gzwrite(gzOutput, buffer, len);;
 	}
 	else
 	{
@@ -228,9 +247,12 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 				if ((i = read2.AlnReportArr[j].PairedAlnCanIdx) != -1 && read1.AlnReportArr[i].AlnScore > 0)
 				{
 					dist = 0 - ((int)(read2.AlnReportArr[j].coor.gPos - read1.AlnReportArr[i].coor.gPos + (read1.AlnReportArr[i].coor.bDir ? read2.rlen : 0 - read1.rlen)));
-					fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), read1.AlnReportArr[i].coor.gPos, dist, (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
+					len = sprintf(buffer, "%s\t%d\t%s\t%ld\t%d\t%s\t=\t%ld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), read1.AlnReportArr[i].coor.gPos, dist, (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
 				}
-				else fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
+				else len = sprintf(buffer, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
+
+				if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+				else gzwrite(gzOutput, buffer, len);;
 			}
 			if (!bMultiHit) break;
 		}
@@ -240,14 +262,23 @@ void OutputPairedSamFile(ReadItem_t& read1, ReadItem_t& read2)
 			seq = NULL;
 		}
 	}
+	free(buffer);
 }
 
-void OutputSingledSamFile(ReadItem_t& read)
+void OutputSingledAlignments(ReadItem_t& read)
 {
-	if (read.score == 0 || (bUnique && read.mapq == 0))
+	int len;
+	char* buffer = NULL;
+
+	buffer = (char*)malloc((200 + read.rlen + (read.rlen >> 1)));
+
+	if (read.score == 0)
 	{
 		iUnMapped++;
-		fprintf(output, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read.header, read.AlnReportArr[0].iFrag, read.seq);
+		len = sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read.header, read.AlnReportArr[0].iFrag, read.seq);
+
+		if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		else gzwrite(gzOutput, buffer, len);;
 	}
 	else
 	{
@@ -264,7 +295,11 @@ void OutputSingledSamFile(ReadItem_t& read)
 					rseq = new char[read.rlen + 1]; rseq[read.rlen] = '\0';
 					GetComplementarySeq(read.rlen, seq, rseq);
 				}
-				fprintf(output, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), read.rlen - read.score, read.score, read.sub_score);
+				len = sprintf(buffer, "%s\t%d\t%s\t%ld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), read.rlen - read.score, read.score, read.sub_score);
+
+				if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+				else gzwrite(gzOutput, buffer, len);;
+
 				if (!bMultiHit) break;
 			}
 		}
@@ -274,6 +309,7 @@ void OutputSingledSamFile(ReadItem_t& read)
 			rseq = NULL;
 		}
 	}
+	free(buffer);
 }
 
 void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
@@ -307,7 +343,6 @@ void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
 		if (bDebugMode) printf("Candidate score threshold = %d\n", thr);
 		for (iter = AlignmentVec.begin(); iter != AlignmentVec.end(); iter++) if (iter->Score < thr) iter->Score = 0;
 	}
-	//return bAmbiguous;
 }
 
 bool CheckPairedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1, vector<AlignmentCandidate_t>& AlignmentVec2)
@@ -327,9 +362,9 @@ bool CheckPairedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec1,
 	{
 		if (AlignmentVec1[i].Score == 0) continue;
 
-		for (best_mate = -1, min_dist = MaxIntronSize, j = 0; j != num2; j++)
+		for (best_mate = -1, min_dist = 2000000, j = 0; j != num2; j++)
 		{
-			if (AlignmentVec2[j].Score == 0) continue;
+			if (AlignmentVec2[j].Score == 0 || AlignmentVec2[j].PosDiff < AlignmentVec1[i].PosDiff) continue;
 
 			dist = abs(AlignmentVec2[j].PosDiff - AlignmentVec1[i].PosDiff);
 			//printf("#%d (s=%d) and #%d (s=%d) (dist=%ld)\n", i+1, AlignmentVec1[i].Score, j+1, AlignmentVec2[j].Score, dist), fflush(stdout);
@@ -497,7 +532,8 @@ void *ReadMapping(void *arg)
 	while (true)
 	{
 		pthread_mutex_lock(&LibraryLock);
-		ReadNum = GetNextChunk(bSepLibrary, ReadFileHandler1, ReadFileHandler2, ReadArr);
+		if (gzCompressed) ReadNum = gzGetNextChunk(bSepLibrary, gzReadFileHandler1, gzReadFileHandler2, ReadArr);
+		else ReadNum = GetNextChunk(bSepLibrary, ReadFileHandler1, ReadFileHandler2, ReadArr);
 		fprintf(stderr, "\r%d %s tags have been processed in %ld seconds...", iTotalReadNum, (bPairEnd? "paired-end":"singled-end"), (time(NULL) - StartProcessTime));
 		pthread_mutex_unlock(&LibraryLock);
 		
@@ -519,23 +555,8 @@ void *ReadMapping(void *arg)
 				{
 					RemoveUnMatedAlignmentCandidates(AlignmentVec1, AlignmentVec2);
 				}
-				//else 
-				//{
-				//	AlignmentVec1.clear();
-				//	AlignmentVec2.clear();
-				//}
 				RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);
 				
-				//if (bAmb1 || bAmb2)
-				//{
-				//	AlignmentVec1.clear();
-				//	AlignmentVec2.clear();
-				//}
-				//if (bDebugMode)
-				//{
-				//	ShowAlignmentCandidateInfo(1, ReadArr[i].header + 1, AlignmentVec1);
-				//	ShowAlignmentCandidateInfo(0, ReadArr[j].header + 1, AlignmentVec2);
-				//}
 				GenMappingReport(true,  ReadArr[i], AlignmentVec1);
 				GenMappingReport(false, ReadArr[j], AlignmentVec2);
 
@@ -544,8 +565,8 @@ void *ReadMapping(void *arg)
 				SetPairedAlignmentFlag(ReadArr[i], ReadArr[j]);
 				EvaluateMAPQ(ReadArr[i]); EvaluateMAPQ(ReadArr[j]);
 
-				if (SJFileName != NULL && ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
-				if (SJFileName != NULL && ReadArr[j].mapq == 255) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
+				if (ReadArr[i].mapq == 255) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
+				if (ReadArr[j].mapq == 255) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
 
 				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
@@ -570,8 +591,8 @@ void *ReadMapping(void *arg)
 		}
 		pthread_mutex_lock(&OutputLock);
 		iTotalReadNum += ReadNum;
-		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedSamFile(ReadArr[i], ReadArr[j]);
-		else for (i = 0; i != ReadNum; i++) OutputSingledSamFile(ReadArr[i]);
+		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedAlignments(ReadArr[i], ReadArr[j]);
+		else for (i = 0; i != ReadNum; i++) OutputSingledAlignments(ReadArr[i]);
 		pthread_mutex_unlock(&OutputLock);
 
 		for (i = 0; i != ReadNum; i++)
@@ -602,7 +623,7 @@ int AbsLoc2ChrLoc(int64_t& g1, int64_t& g2)
 	return ChrIdx;
 }
 
-void OutputSpliceJunctions()
+int OutputSpliceJunctions()
 {
 	bool bDir;
 	int64_t g1, g2;
@@ -616,31 +637,57 @@ void OutputSpliceJunctions()
 		ChrIdx = AbsLoc2ChrLoc(g1, g2); //SJtypeNum[iter->second.type]++;
 		fprintf(SJFile, "%s\t%d\t%d\t%d\n", ChromosomeVec[ChrIdx].name, g1, g2, iter->second.iCount);
 	}
-	if ((n = (int)SpliceJunctionMap.size()) > 0)
-	{
-		fprintf(stderr, "\nFound %d splice junctions (file: %s)\n", n, SJFileName);
-		//for (i = 0; i < 4; i++) fprintf(stderr, "\t%s (%.2f%%)\n", SpliceJunctionArr[i], (int)(10000 * (1.0*SJtypeNum[i] / n)) / 100.0);
-	}
+	n = (int)SpliceJunctionMap.size();
 	SpliceJunctionMap.clear(); fclose(SJFile);
+	return n;
 }
 
 void Mapping()
 {
 	int i;
 
-	ReadFileHandler1.open(ReadFileName, ios_base::in);
-	if (ReadFileName2 != NULL)
+	if (gzCompressed)
 	{
-		bSepLibrary = bPairEnd = true;
-		ReadFileHandler2.open(ReadFileName2, ios_base::in);
+		gzReadFileHandler1 = gzopen(ReadFileName, "rb");
+		if (ReadFileName2 != NULL)
+		{
+			bSepLibrary = bPairEnd = true;
+			gzReadFileHandler2 = gzopen(ReadFileName2, "rb");
+		}
 	}
-	if (SamFileName != NULL) output = fopen(SamFileName, "w");
+	else
+	{
+		ReadFileHandler1 = fopen(ReadFileName, "r");
+		if (ReadFileName2 != NULL)
+		{
+			bSepLibrary = bPairEnd = true;
+			ReadFileHandler2 = fopen(ReadFileName2, "r");
+		}
+	}
+
+	if (OutputFileName != NULL)
+	{
+		if (OutputFileFormat == 0) output = fopen(OutputFileName, "w");
+		else gzOutput = gzopen(OutputFileName, "wb");
+	}
 
 	if (bDebugMode) iThreadNum = 1;
 	else
 	{
-		fprintf(output, "@PG\tPN:Dart\tVN:%s\n", VersionStr);
-		for (i = 0; i < iChromsomeNum; i++) fprintf(output, "@SQ\tSN:%s\tLN:%ld\n", ChromosomeVec[i].name, ChromosomeVec[i].len);
+		int len;
+		char buffer[1024];
+		len = sprintf(buffer, "@PG\tPN:Dart\tVN:%s\n", VersionStr);
+
+		if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		else gzwrite(gzOutput, buffer, len);
+
+		for (i = 0; i < iChromsomeNum; i++)
+		{
+			len = sprintf(buffer, "@SQ\tSN:%s\tLN:%ld\n", ChromosomeVec[i].name, ChromosomeVec[i].len);
+
+			if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+			else gzwrite(gzOutput, buffer, len);
+		}
 	}
 
 	//iThreadNum = 1;
@@ -648,13 +695,23 @@ void Mapping()
 	pthread_t *ThreadArr = new pthread_t[iThreadNum];
 	for (i = 0; i < iThreadNum; i++) pthread_create(&ThreadArr[i], NULL, ReadMapping, NULL);
 	for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
+	delete[] ThreadArr;
 
-	ReadFileHandler1.close(); if (ReadFileName2 != NULL) ReadFileHandler2.close();
+	if (gzCompressed) gzclose(gzReadFileHandler1);
+	else fclose(ReadFileHandler1);
+	if (ReadFileName2 != NULL)
+	{
+		if (gzCompressed) gzclose(gzReadFileHandler2);
+		else fclose(ReadFileHandler2);
+	}
 	fprintf(stderr, "\rAll the %d %s reads have been processed in %lld seconds.\n", iTotalReadNum, (bPairEnd? "paired-end":"single-end"), (long long)(time(NULL) - StartProcessTime));
 
-	if (SamFileName != NULL) fclose(output);
-
-	delete[] ThreadArr;
+	if (OutputFileName != NULL)
+	{
+		if (OutputFileFormat == 0) fclose(output);
+		else if (OutputFileFormat == 1) gzclose(gzOutput);
+		//else output = fopen(OutputFileName, "wb");
+	}
 
 	if(iTotalReadNum > 0)
 	{
@@ -664,5 +721,6 @@ void Mapping()
 		if (!bUnique) fprintf(stderr, "\t# of multiple mapped reads = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
 		fprintf(stderr, "\t# of unmapped reads = %d (%.2f%%)\n", iUnMapped, (int)(10000 * (1.0*iUnMapped / iTotalReadNum) + 0.5) / 100.0);
 	}
-	if (SJFileName != NULL) OutputSpliceJunctions();
+	i = OutputSpliceJunctions();
+	fprintf(stderr, "\t# of splice junctions = (file: %s)\n", i, SJFileName);
 }

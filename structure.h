@@ -13,8 +13,9 @@
 #include <ctime>
 #include <ctype.h>
 #include <pthread.h>
+#include <zlib.h>
 
-#define ReadChunkSize 1024
+#define ReadChunkSize 3000
 
 #define KmerSize 8
 #define KmerPower 0x3FFF
@@ -176,10 +177,10 @@ extern char SJFileName[256];
 extern const char *VersionStr;
 extern const char* SpliceJunctionArr[4];
 extern map<int64_t, int> ChrLocMap, ExonMap;
-extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique;
-extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *SamFileName;
+extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique, gzCompressed;
+extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *OutputFileName;
 
-extern int iThreadNum, MaxIntronSize;
+extern int iThreadNum, MaxIntronSize, OutputFileFormat;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
 
 // bwt_index.cpp
@@ -211,9 +212,9 @@ extern void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<Alignment
 extern Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, vector<pair<int, char> >& cigar_vec);
 
 // GetData.cpp
-extern void GetGenomeSeq();
 extern bool CheckBWAIndexFiles(string IndexPrefix);
-extern int GetNextChunk(bool bSepLibrary, fstream& file, fstream& file2, ReadItem_t* ReadArr);
+extern int GetNextChunk(bool bSepLibrary, FILE *file, FILE *file2, ReadItem_t* ReadArr);
+extern int gzGetNextChunk(bool bSepLibrary, gzFile file, gzFile file2, ReadItem_t* ReadArr);
 
 // tools.cpp
 extern void ShowSeedLocationInfo(int64_t MyPos);

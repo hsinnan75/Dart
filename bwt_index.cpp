@@ -6,7 +6,7 @@ static bwtint_t fread_fix(FILE *fp, bwtint_t size, void *a)
 	bwtint_t offset = 0;
 	while (size) {
 		bwtint_t x = bufsize < size ? bufsize : size;
-		x = fread((a + offset), 1, x, fp);
+		x = fread(((char*)a + offset), 1, x, fp);
 		size -= x; offset += x;
 	}
 	return offset;
@@ -156,7 +156,7 @@ bwaidx_t *bwa_idx_load(const char *hint)
 	idx->bwt = bwa_idx_load_bwt(hint);
 	idx->bns = bns_restore(hint);
 	idx->pac = (uint8_t*)calloc(idx->bns->l_pac/4+1, 1);
-	fprintf(stderr, "Done!\n");
+	fprintf(stderr, "\n");
 
 	return idx;
 }
@@ -255,7 +255,7 @@ void RestoreReferenceInfo()
 	RefSequence = new char[TwoGenomeSize + 1]; RefSequence[TwoGenomeSize] = '\0';
 	RestoreReferenceSequences();
 
-	fprintf(stderr, "Done!\n");
+	fprintf(stderr, "\n");
 
 	//for (map<int64_t, int>::iterator iter = ChrLocMap.begin(); iter != ChrLocMap.end(); iter++)
 	//{

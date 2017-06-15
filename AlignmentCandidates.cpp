@@ -338,7 +338,7 @@ pair<int, int> IdentifyBestUnGappedPartition(char* seq, int rGaps, SeedPair_t& L
 	Rvec.resize(rGaps + 1); s = 0; rPos = LeftSeed.rPos + LeftSeed.rLen; gPos = LeftSeed.gPos + LeftSeed.gLen;
 	for (i = 1; i <= rGaps; rPos++, gPos++, i++)
 	{
-		if (seq[rPos] == RefSequence[gPos]) s++;
+		if (nst_nt4_table[(int)seq[rPos]] == nst_nt4_table[(int)RefSequence[gPos]]) s++;
 		Rvec[i] = s; // ext_len=i, score=s
 	}
 	//string frag1, frag2, aln;
@@ -352,7 +352,7 @@ pair<int, int> IdentifyBestUnGappedPartition(char* seq, int rGaps, SeedPair_t& L
 	Lvec.resize(rGaps + 1); s = 0; rPos = RightSeed.rPos - 1; gPos = RightSeed.gPos - 1;
 	for (i = 1; i <= rGaps; rPos--, gPos--, i++)
 	{
-		if (seq[rPos] == RefSequence[gPos]) s++;
+		if (nst_nt4_table[(int)seq[rPos]] == nst_nt4_table[(int)RefSequence[gPos]]) s++;
 		Lvec[rGaps - i] = s; // ext_len=i, score=s
 	}
 	//strncpy((char*)frag1.c_str(), seq + RightSeed.rPos - rGaps, rGaps);
