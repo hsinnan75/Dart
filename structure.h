@@ -15,7 +15,7 @@
 #include <pthread.h>
 #include <zlib.h>
 
-#define ReadChunkSize 3000
+#define ReadChunkSize 2048
 
 #define KmerSize 8
 #define KmerPower 0x3FFF

@@ -108,7 +108,7 @@ ReadItem_t GetNextEntry(FILE *file)
 int GetNextChunk(bool bSepLibrary, FILE *file, FILE *file2, ReadItem_t* ReadArr)
 {
 	char* rseq;
-	int i, iCount = 0;
+	int i, iBase = 0, iCount = 0;
 
 	while (true)
 	{
@@ -121,7 +121,7 @@ int GetNextChunk(bool bSepLibrary, FILE *file, FILE *file2, ReadItem_t* ReadArr)
 			//if (islower(ReadArr[iCount].seq[i])) ReadArr[iCount].seq[i] = toupper(ReadArr[iCount].seq[i]);
 			ReadArr[iCount].EncodeSeq[i] = nst_nt4_table[(int)ReadArr[iCount].seq[i]];
 		}
-		iCount++;
+		iBase += ReadArr[iCount].rlen; iCount++;
 
 		if (bSepLibrary) ReadArr[iCount] = GetNextEntry(file2);
 		else if ((ReadArr[iCount] = GetNextEntry(file)).rlen == 0) break;
@@ -140,8 +140,8 @@ int GetNextChunk(bool bSepLibrary, FILE *file, FILE *file2, ReadItem_t* ReadArr)
 			//if (islower(ReadArr[iCount].seq[i])) ReadArr[iCount].seq[i] = toupper(ReadArr[iCount].seq[i]);
 			ReadArr[iCount].EncodeSeq[i] = nst_nt4_table[(int)ReadArr[iCount].seq[i]];
 		}
-		iCount++;
-		if (iCount == ReadChunkSize) break;
+		iBase += ReadArr[iCount].rlen; iCount++;
+		if (iCount == ReadChunkSize || iBase > 1000000) break;
 	}
 	return iCount;
 }
@@ -169,14 +169,14 @@ ReadItem_t gzGetNextEntry(gzFile file)
 int gzGetNextChunk(bool bSepLibrary, gzFile file, gzFile file2, ReadItem_t* ReadArr)
 {
 	char* rseq;
-	int i, iCount = 0;
+	int i, iBase = 0, iCount = 0;
 
 	while (true)
 	{
 		if ((ReadArr[iCount] = gzGetNextEntry(file)).rlen == 0) break;
 		ReadArr[iCount].EncodeSeq = new uint8_t[ReadArr[iCount].rlen];
 		for (i = 0; i != ReadArr[iCount].rlen; i++) ReadArr[iCount].EncodeSeq[i] = nst_nt4_table[(int)ReadArr[iCount].seq[i]];
-		iCount++;
+		iBase += ReadArr[iCount].rlen; iCount++;
 
 		if (bSepLibrary) ReadArr[iCount] = gzGetNextEntry(file2);
 		else if ((ReadArr[iCount] = gzGetNextEntry(file)).rlen == 0) break;
@@ -190,9 +190,9 @@ int gzGetNextChunk(bool bSepLibrary, gzFile file, gzFile file2, ReadItem_t* Read
 		}
 		ReadArr[iCount].EncodeSeq = new uint8_t[ReadArr[iCount].rlen];
 		for (i = 0; i != ReadArr[iCount].rlen; i++) ReadArr[iCount].EncodeSeq[i] = nst_nt4_table[(int)ReadArr[iCount].seq[i]];
+		iBase += ReadArr[iCount].rlen; iCount++;
 
-		iCount++;
-		if (iCount == ReadChunkSize) break;
+		if (iCount == ReadChunkSize || iBase > 1000000) break;
 	}
 	return iCount;
 }

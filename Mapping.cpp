@@ -46,7 +46,6 @@ void SetSingleAlignmentFlag(ReadItem_t& read)
 
 	if (read.score > read.sub_score) // unique mapping or bMultiHit=false
 	{
-		iUniqueMapped++;
 		i = read.iBestAlnCanIdx;
 		if (read.AlnReportArr[i].coor.bDir == false) read.AlnReportArr[i].iFrag = 0x10;
 		else read.AlnReportArr[i].iFrag = 0;
@@ -75,7 +74,6 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 	//printf("read1:[%d, %d]:#%d, read2:[%d, %d] #%d\n", read1.score, read1.sub_score, read1.iBestAlnCanIdx, read2.score, read2.sub_score, read2.iBestAlnCanIdx); fflush(stdout);
 	if (read1.score > read1.sub_score && read2.score > read2.sub_score) // unique mapping
 	{
-		iUniqueMapped += 2;
 		i = read1.iBestAlnCanIdx;
 		read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
 
@@ -94,7 +92,6 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 	{
 		if (read1.score > read1.sub_score) // unique mapping
 		{
-			iUniqueMapped++;
 			i = read1.iBestAlnCanIdx;
 			read1.AlnReportArr[i].iFrag = 0x41; // read1 is the first read in a pair
 			read1.AlnReportArr[i].iFrag |= (read1.AlnReportArr[i].coor.bDir ? 0x20 : 0x10);
@@ -126,7 +123,6 @@ void SetPairedAlignmentFlag(ReadItem_t& read1, ReadItem_t& read2)
 
 		if (read2.score > read2.sub_score) // unique mapping
 		{
-			iUniqueMapped++;
 			j = read2.iBestAlnCanIdx;
 			read2.AlnReportArr[j].iFrag = 0x81; // read2 is the second read in a pair
 			read2.AlnReportArr[j].iFrag |= (read2.AlnReportArr[j].coor.bDir ? 0x20 : 0x10);
@@ -198,6 +194,8 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2)
 	}
 	else
 	{
+		if (read1.mapq == Max_MAPQ) iUniqueMapped++;
+
 		seq = read1.seq; rseq = NULL;
 		for (i = read1.iBestAlnCanIdx; i < read1.CanNum; i++)
 		{
@@ -240,6 +238,8 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2)
 	}
 	else
 	{
+		if (read2.mapq == Max_MAPQ) iUniqueMapped++;
+
 		rseq = read2.seq; seq = NULL;
 		for (j = read2.iBestAlnCanIdx; j < read2.CanNum; j++)
 		{
@@ -290,6 +290,8 @@ void OutputSingledAlignments(ReadItem_t& read)
 	{
 		int i;
 		char *seq, *rseq;
+
+		if (read.mapq == Max_MAPQ) iUniqueMapped++;
 
 		seq = read.seq; rseq = NULL;
 		for (i = read.iBestAlnCanIdx; i < read.CanNum; i++)
