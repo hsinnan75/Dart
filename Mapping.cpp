@@ -3,7 +3,7 @@
 #include "structure.h"
 
 #define MAPQ_COEF 30
-#define Max_MAPQ  60
+#define Max_MAPQ  50
 
 gzFile gzOutput;
 //char buffer[4096];
@@ -165,15 +165,18 @@ void EvaluateMAPQ(ReadItem_t& read)
 	if (read.score == 0 || read.score == read.sub_score) read.mapq = 0;
 	else
 	{
-		if (read.sub_score == 0 || read.score - read.sub_score > 10) read.mapq = Max_MAPQ;
+		if (read.sub_score == 0 || read.score > read.sub_score) read.mapq = Max_MAPQ;
 		else
 		{
-			//for (iMap = 0, i = 0; i < read.CanNum; i++)
-			//	if (read.AlnReportArr[i].AlnScore == read.score) iMap++;
-			//if(iMap > 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
+			for (iMap = 0, i = 0; i < read.CanNum; i++) if (read.AlnReportArr[i].AlnScore == read.score) iMap++;
+			if (iMap >= 10) read.mapq = 0;
+			else if (iMap >= 4) read.mapq = 1;
+			else if (iMap == 3) read.mapq = 2;
+			else if (iMap == 2) read.mapq = 3;
+			else read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
+
+			//if(iMap < 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
 			//else read.mapq = 0;
-			read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
-			if (read.mapq > Max_MAPQ) read.mapq = Max_MAPQ;
 		}
 	}
 }
@@ -640,8 +643,8 @@ int OutputSpliceJunctions()
 		ChrIdx = AbsLoc2ChrLoc(g1, g2); //SJtypeNum[iter->second.type]++;
 		fprintf(SJFile, "%s\t%d\t%d\t%d\n", ChromosomeVec[ChrIdx].name, g1, g2, iter->second.iCount);
 	}
-	n = (int)SpliceJunctionMap.size();
-	SpliceJunctionMap.clear(); fclose(SJFile);
+	fclose(SJFile); n = (int)SpliceJunctionMap.size();
+
 	return n;
 }
 
@@ -723,7 +726,8 @@ void Mapping()
 		fprintf(stderr, "\t# of unique mapped reads = %d (%.2f%%)\n", iUniqueMapped, (int)(10000 * (1.0*iUniqueMapped / iTotalReadNum) + 0.5) / 100.0);
 		if (!bUnique) fprintf(stderr, "\t# of multiple mapped reads = %d (%.2f%%)\n", (iTotalReadNum - iUnMapped - iUniqueMapped), (int)(10000 * (1.0*(iTotalReadNum - iUnMapped - iUniqueMapped) / iTotalReadNum) + 0.5) / 100.0);
 		fprintf(stderr, "\t# of unmapped reads = %d (%.2f%%)\n", iUnMapped, (int)(10000 * (1.0*iUnMapped / iTotalReadNum) + 0.5) / 100.0);
+
+		i = OutputSpliceJunctions();
+		fprintf(stderr, "\t# of splice junctions = %d (file: %s)\n\n", i, SJFileName);
 	}
-	i = OutputSpliceJunctions();
-	fprintf(stderr, "\t# of splice junctions = (file: %s)\n", i, SJFileName);
 }
