@@ -86,6 +86,8 @@ int main(int argc, char* argv[])
 
 	iTotal = iAln = 0; iTotalIdy = iIdenticalBase = iTotalLength = 0;
 	file.open("hg38s.fa", ios_base::in); // read reference sequences
+	if (!file.is_open()) fprintf(stderr, "error open file: hg38s.fa\n"), exit(0);
+
 	while (!file.eof())
 	{
 		getline(file, str);
