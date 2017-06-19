@@ -124,7 +124,7 @@ void ShowSeedLocationInfo(int64_t MyPos)
 	map<int64_t, int>::const_iterator iter = ChrLocMap.lower_bound(MyPos);
 	if (MyPos < GenomeSize) gPos = MyPos - ChromosomeVec[iter->second].FowardLocation;
 	else gPos = iter->first - MyPos;
-	printf("\t\t\t\t\tChr [%s, %ld]\n", ChromosomeVec[iter->second].name, gPos);
+	printf("\t\t\t\t\tChr [%s, %lld]\n", ChromosomeVec[iter->second].name, gPos);
 }
 
 void ShowSeedInfo(vector<SeedPair_t>& SeedPairVec)
@@ -133,7 +133,7 @@ void ShowSeedInfo(vector<SeedPair_t>& SeedPairVec)
 	{
 		if (iter->rLen > 0 || iter->gLen > 0)
 		{
-			printf("\t\tseed#%d: R[%d-%d]=%d G[%ld-%ld]=%d Diff=%ld %s\n", (int)(iter - SeedPairVec.begin() + 1), iter->rPos, iter->rPos + iter->rLen - 1, iter->rLen, iter->gPos, iter->gPos + iter->gLen - 1, iter->gLen, iter->PosDiff, (iter->bSimple ? "Simple" : "Normal"));
+			printf("\t\tseed#%d: R[%d-%d]=%d G[%lld-%lld]=%d Diff=%lld %s\n", (int)(iter - SeedPairVec.begin() + 1), iter->rPos, iter->rPos + iter->rLen - 1, iter->rLen, iter->gPos, iter->gPos + iter->gLen - 1, iter->gLen, iter->PosDiff, (iter->bSimple ? "Simple" : "Normal"));
 			if(iter->gPos < GenomeSize) ShowSeedLocationInfo(iter->gPos);
 			else ShowSeedLocationInfo(iter->gPos + iter->gLen - 1);
 		}
@@ -169,7 +169,7 @@ int ProcessNormalSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> 
 			PairwiseSequenceAlignment(sp.rLen, frag1, sp.gLen, frag2);
 			score = AddNewCigarElements(frag1, frag2, cigar_vec);
 		}
-		//if (bDebugMode) printf("NormalPair:\n%s #read[%d-%d]=%d\n%s #chr[%ld-%ld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
+		//if (bDebugMode) printf("NormalPair:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 	}
 	return score;
 }
@@ -182,7 +182,7 @@ int ProcessHeadSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 	frag1.resize(sp.rLen); strncpy((char*)frag1.c_str(), seq + sp.rPos, sp.rLen);
 	frag2.resize(sp.gLen); strncpy((char*)frag2.c_str(), RefSequence + sp.gPos, sp.gLen);
 
-	//if (bDebugMode) printf("Head:\n%s #read[%d-%d]=%d\n%s #chr[%ld-%ld]=%d\n\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen), fflush(stdout);
+	//if (bDebugMode) printf("Head:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\n\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen), fflush(stdout);
 
 	if (sp.rLen == sp.gLen && (sp.rLen - (score = CalFragPairIdenticalBases(sp.rLen, (char*)frag1.c_str(), (char*)frag2.c_str()))) <= (sp.rLen < 25 ? 5 : (int)(sp.rLen*0.2))) cigar_vec.push_back(make_pair(sp.rLen, 'M'));
 	else
@@ -204,7 +204,7 @@ int ProcessHeadSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 			sp.rPos += p; sp.rLen -= p; cigar_vec.push_back(make_pair(p, 'S'));
 		}
 		score = AddNewCigarElements(frag1, frag2, cigar_vec);
-		//if (bDebugMode) printf("H2:\n%s #read[%d-%d]=%d\n%s #chr[%ld-%ld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
+		//if (bDebugMode) printf("H2:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 	}
 	return score;
 }
@@ -217,7 +217,7 @@ int ProcessTailSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 	frag1.resize(sp.rLen); strncpy((char*)frag1.c_str(), seq + sp.rPos, sp.rLen);
 	frag2.resize(sp.gLen); strncpy((char*)frag2.c_str(), RefSequence + sp.gPos, sp.gLen);
 
-	//if (bDebugMode) printf("Tail:\n%s #read[%d-%d]=%d\n%s #chr[%ld-%ld]=%d\n\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen), fflush(stdout);
+	//if (bDebugMode) printf("Tail:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\n\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen), fflush(stdout);
 
 	if (sp.rLen == sp.gLen && (sp.rLen - (score = CalFragPairIdenticalBases(sp.rLen, (char*)frag1.c_str(), (char*)frag2.c_str()))) <= (sp.rLen < 25 ? 5 : (int)(sp.rLen*0.2))) cigar_vec.push_back(make_pair(sp.rLen, 'M'));
 	else
@@ -241,7 +241,7 @@ int ProcessTailSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 			if (bDebugMode) printf("find %d tailing gaps in the genome block\n", c);
 		}
 		score = AddNewCigarElements(frag1, frag2, cigar_vec); if (c > 0) cigar_vec.push_back(make_pair(c, 'S'));
-		//if (bDebugMode) printf("T2:\n%s #read[%d-%d]=%d\n%s #chr[%ld-%ld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
+		//if (bDebugMode) printf("T2:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 	}
 	return score;
 }

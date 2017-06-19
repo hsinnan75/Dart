@@ -239,7 +239,7 @@ bwtSearchResult_t BWT_LocalSearch(uint8_t* seq, int start, int stop, int64_t L_B
 
 			if ((int64_t)gPos >= L_Boundary && (int64_t)gPos < R_Boundary)
 			{
-				//printf("candidate %ld\n", gPos);
+				//printf("candidate %lld\n", gPos);
 				if (bwtSearchResult.freq == 0)
 				{
 					bwtSearchResult.freq = 1;

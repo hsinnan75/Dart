@@ -20,7 +20,7 @@ void IdentifyGenomicRegion(string& header, string& r_chr, int64_t& left_gPos, in
 	tmp = header.substr(p1 + 1, p2 - p1 - 1); left_gPos = atoi(tmp.c_str());
 	tmp = header.substr(p2 + 1, p3 - p2 + 1); right_gPos = atoi(tmp.c_str());
 
-	//printf("header:%s --> chr=%s, l=%ld, r=%ld\n", header.c_str(), r_chr.c_str(), left_gPos, right_gPos);
+	//printf("header:%s --> chr=%s, l=%lld, r=%lld\n", header.c_str(), r_chr.c_str(), left_gPos, right_gPos);
 }
 
 int main(int argc, char* argv[])
@@ -61,24 +61,23 @@ int main(int argc, char* argv[])
 
 		if (iTotal % 100000 == 0)
 		{
-			if (iTotal > 0) sen = (int)(1000 * (1.0*(iTotal - iEmpty) / iTotal + 0.0005)) / 10.0;
-			else sen = 0;
-
+			//if (iTotal > 0) sen = (int)(1000 * (1.0*(iTotal - iEmpty) / iTotal + 0.0005)) / 10.0;
+			//else sen = 0;
 			if (iTotal > 0) acc = (int)(1000 * (1.0*iCor / (iTotal - iEmpty - iLowHAPQ) + 0.0005)) / 10.0;
 			else acc = 0;
 
-			printf("\rSen = %d / %d = %.2f, Acc = %d / %d = %.2f", iTotal - iEmpty, iTotal, sen, iCor, (iTotal - iEmpty - iLowHAPQ), acc);
+			printf("\Acc = %d / %d = %.2f", iCor, (iTotal - iEmpty - iLowHAPQ), acc);
 		}
 	}
 	file.close();
 
-	if (iTotal > 0) sen = (int)(1000 * (1.0*(iTotal - iEmpty) / iTotal + 0.0005)) / 10.0;
-	else sen = 0;
+	//if (iTotal > 0) sen = (int)(1000 * (1.0*(iTotal - iEmpty) / iTotal + 0.0005)) / 10.0;
+	//else sen = 0;
 
 	if (iTotal > 0) acc = (int)(1000 * (1.0*iCor / (iTotal - iEmpty - iLowHAPQ) + 0.0005)) / 10.0;
 	else acc = 0;
 
-	printf("\rSen = %d / %d = %.2f, Acc = %d / %d = %.2f\n", iTotal - iEmpty, iTotal, sen, iCor, (iTotal - iEmpty - iLowHAPQ), acc);
+	printf("\rAcc = %d / %d = %.2f\n", iCor, (iTotal - iEmpty - iLowHAPQ), acc);
 
 	return 0;
 }
