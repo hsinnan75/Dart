@@ -169,6 +169,7 @@ bwtSearchResult_t BWT_Search(uint8_t* seq, int start, int stop)
 		if (ok[i].x[2] == 0) break; // extension ends
 		else ik = ok[i];
 	}
+	bwtSearchResult.LocArr = NULL;
 	//printf("MaxSeedLen=%d, freq=%d\n", pos - start, ik.x[2]);
 	if (ik.x[2] <= OCC_Thr && (bwtSearchResult.len = pos - start) >= 16)
 	{
@@ -194,7 +195,7 @@ bwtSearchResult_t BWT_LocalSearch(uint8_t* seq, int start, int stop, int64_t L_B
 	ik.x[1] = Refbwt->L2[3 - p] + 1;
 	ik.x[2] = Refbwt->L2[p + 1] - Refbwt->L2[p];
 
-	bwtSearchResult.len = bwtSearchResult.freq = 0;
+	bwtSearchResult.len = bwtSearchResult.freq = 0; bwtSearchResult.LocArr = NULL; uk = ik;
 	for (pos = start + 1; pos < stop; pos++)
 	{
 		if (seq[pos] > 3) break;// ambiguous base
@@ -222,7 +223,7 @@ bwtSearchResult_t BWT_LocalSearch(uint8_t* seq, int start, int stop, int64_t L_B
 			ik = ok[i];
 		}
 	}
-	if ((bwtSearchResult.len == 0 && (int)ik.x[2] < 10000) || ((gPos = bwt_sa(ik.x[0])) >= L_Boundary && gPos < R_Boundary))
+	if ((bwtSearchResult.len == 0 && (int)(ik.x[2]) < 10000) || ((int64_t)(gPos = bwt_sa(ik.x[0])) >= L_Boundary && (int64_t)gPos < R_Boundary))
 	{
 		bwtSearchResult.len = pos - start;
 		uk = ik;
@@ -236,7 +237,7 @@ bwtSearchResult_t BWT_LocalSearch(uint8_t* seq, int start, int stop, int64_t L_B
 		{
 			gPos = bwt_sa(uk.x[0] + i);
 
-			if (gPos >= L_Boundary && gPos < R_Boundary)
+			if ((int64_t)gPos >= L_Boundary && (int64_t)gPos < R_Boundary)
 			{
 				//printf("candidate %ld\n", gPos);
 				if (bwtSearchResult.freq == 0)
@@ -244,12 +245,12 @@ bwtSearchResult_t BWT_LocalSearch(uint8_t* seq, int start, int stop, int64_t L_B
 					bwtSearchResult.freq = 1;
 					bwtSearchResult.LocArr = new bwtint_t[1];
 				}
-				if (start == 0 && min_dist > (R_Boundary - gPos))
+				if (start == 0 && min_dist > (R_Boundary - (int64_t)gPos))
 				{
 					bwtSearchResult.LocArr[0] = gPos;
 					min_dist = R_Boundary - gPos;
 				}
-				else if (start > 0 && min_dist > (gPos - L_Boundary))
+				else if (start > 0 && min_dist > ((int64_t)gPos - L_Boundary))
 				{
 					bwtSearchResult.LocArr[0] = gPos;
 					min_dist = gPos - L_Boundary;

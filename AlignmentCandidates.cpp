@@ -3,7 +3,6 @@
 #define MinIntronSize 5
 
 map<int64_t, int> ExonMap;
-static pthread_mutex_t ExonLoc;
 int ShiftArr[19] = { 0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9 };
 
 typedef struct
@@ -149,7 +148,7 @@ bool CheckCoordinateValidity(vector<SeedPair_t>& SeedVec)
 			break;
 		}
 	}
-	if ((gPos1 < GenomeSize && gPos2 >= GenomeSize) || (gPos1 >= GenomeSize && gPos2 < GenomeSize) || ChrLocMap.lower_bound(gPos1)->second != ChrLocMap.lower_bound(gPos2)->second)
+	if ((gPos1 < GenomeSize && gPos2 >= GenomeSize) || (gPos1 >= GenomeSize && gPos2 < GenomeSize)/* || (ChrLocMap.lower_bound(gPos1))->second != (ChrLocMap.lower_bound(gPos2))->second*/)
 	{
 		bValid = false;
 		//if (bDebugMode) printf("%ld and %ld are not in the same chromosome!\n", gPos1, gPos2);
@@ -302,7 +301,7 @@ void RemoveNullSeeds(vector<SeedPair_t>& SeedVec)
 
 void ShowFragmentPair(char* seq, SeedPair_t& SeedPair)
 {
-	int i, glen, shift;
+	int glen, shift;
 	string frag1, frag2;
 	int64_t LeftGPos, RightGPos;
 
@@ -381,8 +380,8 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 {
 	int64_t gPos;
 	vector<int> Rvec, Lvec;
+	int i, len, p, s, max_score = 0;
 	GappedExtension_t GappedExtension;
-	int i, len, p, q, s, max_score = 0;
 	string frag1, frag2, frag3, frag4, aln;
 
 	frag1.resize(rGaps); strncpy((char*)frag1.c_str(), seq + LeftSeed.rPos + LeftSeed.rLen, rGaps);
@@ -455,9 +454,8 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 
 void FillGapsBetweenAdjacentSeeds(char* seq, SeedPair_t& left_seed, SeedPair_t& right_seed, vector<SeedPair_t>& Vec)
 {
-	int64_t gPos;
+	int rGaps;
 	SeedPair_t seed;
-	int rPos, rGaps;
 	pair<int, int> Partition;
 
 	seed.bAcceptorSite = false; seed.rLen = seed.gLen = 0;
@@ -535,11 +533,9 @@ void FillGapsBetweenAdjacentSeeds(char* seq, SeedPair_t& left_seed, SeedPair_t& 
 
 void SeedExtension(char* seq, vector<SeedPair_t>& SeedVec)
 {
-	int64_t gPos;
-	SeedPair_t seed;
 	vector<SeedPair_t> Vec;
 	pair<int, int> Partition;
-	int i, rPos, rGaps, PosDiff, num = (int)SeedVec.size();
+	int i, PosDiff, num = (int)SeedVec.size();
 
 	for (i = 1; i < num; i++)
 	{
@@ -558,9 +554,8 @@ SeedPair_t ReseedingWithSpecificRegion(char* seq, int rBegin, int rEnd, int64_t 
 {
 	SeedPair_t seed;
 	char *frag1, *frag2;
+	int rlen, glen, thr;
 	vector<SeedPair_t> vec;
-	int i, j, rlen, glen, thr;
-	int64_t gPos, PosDiff, best_gPos;
 
 	//if (bDebugMode) printf("Perform re-seeding between r[%d-%d] g[%ld - %ld]\n", rBegin, rEnd - 1, L_Boundary, R_Boundary);
 
@@ -588,9 +583,8 @@ SeedPair_t ReseedingWithSpecificRegion(char* seq, int rBegin, int rEnd, int64_t 
 SeedPair_t ReseedingFromEnd(bool bDir, uint8_t* seq, int rBegin, int rEnd, int64_t OriginalGenomicPos)
 {
 	SeedPair_t seed;
-	int i, j, rlen, glen, thr;
 	map<int64_t, int>::iterator ChrIter;
-	int64_t gPos, gStop, L_Boundary, R_Boundary, PosDiff, best_gPos;
+	int64_t gStop, L_Boundary, R_Boundary;
 
 	//if (bDebugMode) printf("Perform re-seeding with r[%d-%d]\n", rBegin, rEnd);
 
@@ -637,7 +631,6 @@ SeedPair_t IdentifyHeadingSeed(char* seq, uint8_t* EncodeSeq, int nGaps, int64_t
 
 SeedPair_t IdentifyTailingSeed(char* seq, uint8_t* EncodeSeq, int rPos_begin, int rPos_end, int64_t gPos)
 {
-	int nGaps;
 	SeedPair_t seed;
 
 	seed.rLen = seed.gLen = 0;
@@ -648,10 +641,9 @@ SeedPair_t IdentifyTailingSeed(char* seq, uint8_t* EncodeSeq, int rPos_begin, in
 
 void IdentifyMissingSeeds(int rlen, char* seq, vector<SeedPair_t>& SeedVec)
 {
-	int64_t gPos;
 	SeedPair_t seed;
 	pair<int, int> Partition;
-	int i, rPos, rGaps, shift, PosDiff, num = (int)SeedVec.size();
+	int i, rGaps, PosDiff, num = (int)SeedVec.size();
 
 	for (i = 1; i < num; i++)
 	{
@@ -697,7 +689,6 @@ bool CheckSeqFragment(int64_t LeftGPos, int64_t RightGPos, int shift)
 int IdentifySpliceJunction(int SJtype, SeedPair_t& left_seed, SeedPair_t& right_seed)
 {
 	int i, j, shift;
-	bool bChecked = false;
 	int64_t LeftGPos, RightGPos, gPos1, gPos2;
 
 	i = (left_seed.rLen < right_seed.rLen ? left_seed.rLen : right_seed.rLen);
@@ -723,11 +714,9 @@ int IdentifySpliceJunction(int SJtype, SeedPair_t& left_seed, SeedPair_t& right_
 
 int CheckSpliceJunction(int rlen, char* seq, uint8_t* EncodeSeq, vector<SeedPair_t>& SeedVec)
 {
-	int64_t gPos;
-	SeedPair_t seed;
 	vector<SeedPair_t> Vec;
 	vector<pair<int, int> > vec, best_vec;
-	int i, j, rPos, SJtype, shift, c, mis, min_cost, best_type, num = (int)SeedVec.size();
+	int i, j, SJtype, shift, c, mis, min_cost, best_type, num = (int)SeedVec.size();
 
 	min_cost = 1000; best_type = -1;
 	for (SJtype = 0; SJtype < 4; SJtype++)
@@ -822,7 +811,6 @@ int IdentifyTranslocationRange(int i, int num, vector<pair<int, int> >& vec, vec
 
 void RemoveTranslocatedSeeds(vector<SeedPair_t>& SeedVec)
 {
-	int64_t gPos;
 	int i, j, k, s1, s2, num;
 	bool bTranslocation = false;
 	vector<pair<int, int> > vec;
@@ -1021,7 +1009,7 @@ void UpdateMyExonMap(map<int64_t, int>& MyExonMap, vector<SeedPair_t>& SeedPairV
 void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
 {
 	Coordinate_t coor;
-	int i, j, k, g, num;
+	int i, j, g, num;
 	map<int64_t, int> MyExonMap;
 	vector<pair<int, char> > cigar_vec;
 	map<int64_t, int>::iterator iter, ExonMapIter;

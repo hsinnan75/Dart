@@ -169,7 +169,7 @@ void EvaluateMAPQ(ReadItem_t& read)
 			else if (iMap >= 4) read.mapq = 1;
 			else if (iMap == 3) read.mapq = 2;
 			else if (iMap == 2) read.mapq = 3;
-			else read.mapq = (int)(MAPQ_COEF * (1 - (float)(read.score - read.sub_score) / read.score)*log(read.score) + 0.4999);
+			else read.mapq = Max_MAPQ;
 
 			//if(iMap < 1) read.mapq = (int)(-10 * log10(1 - (1.0 / iMap)));
 			//else read.mapq = 0;
@@ -322,7 +322,6 @@ void OutputSingledAlignments(ReadItem_t& read)
 
 void RemoveRedundantCandidates(vector<AlignmentCandidate_t>& AlignmentVec)
 {
-	bool bAmbiguous = false;
 	int thr, score1, score2;
 	vector<AlignmentCandidate_t>::iterator iter;
 
@@ -432,8 +431,7 @@ void RemoveUnMatedAlignmentCandidates(vector<AlignmentCandidate_t>& AlignmentVec
 void CheckPairedFinalAlignments(ReadItem_t& read1, ReadItem_t& read2)
 {
 	bool bMated;
-	int64_t dist;
-	int i, j, best_mate, s;
+	int i, j, s;
 
 	//printf("BestIdx1=%d, BestIdx2=%d\n", read1.iBestAlnCanIdx + 1, read2.iBestAlnCanIdx + 1);
 	bMated = read1.AlnReportArr[read1.iBestAlnCanIdx].PairedAlnCanIdx == read2.iBestAlnCanIdx ? true : false;
@@ -529,9 +527,8 @@ void UpdateGlobalSJMap(map<pair<int64_t, int64_t>, SpliceJunction_t>& LocalSJMap
 
 void *ReadMapping(void *arg)
 {
-	bool bAmb1, bAmb2;
+	int i, j, ReadNum;
 	ReadItem_t* ReadArr = NULL;
-	int i, j, max_dist, ReadNum, EstDistance;
 	vector<SeedPair_t> SeedPairVec1, SeedPairVec2;
 	map<pair<int64_t, int64_t>, SpliceJunction_t> LocalSJMap;
 	vector<AlignmentCandidate_t> AlignmentVec1, AlignmentVec2;
@@ -633,21 +630,19 @@ int AbsLoc2ChrLoc(int64_t& g1, int64_t& g2)
 
 int OutputSpliceJunctions()
 {
-	bool bDir;
+	int ChrIdx;
 	int64_t g1, g2;
-	int i, n, ChrIdx;
-	int SJtypeNum[4] = { 0, 0, 0, 0 };
 	FILE *SJFile = fopen(SJFileName, "w");
 
 	for (map<pair<int64_t, int64_t>, SpliceJunction_t>::iterator iter = SpliceJunctionMap.begin(); iter != SpliceJunctionMap.end(); iter++)
 	{
 		g1 = iter->first.first; g2 = iter->first.second;
 		ChrIdx = AbsLoc2ChrLoc(g1, g2); //SJtypeNum[iter->second.type]++;
-		fprintf(SJFile, "%s\t%d\t%d\t%d\n", ChromosomeVec[ChrIdx].name, g1, g2, iter->second.iCount);
+		fprintf(SJFile, "%s\t%ld\t%ld\t%d\n", ChromosomeVec[ChrIdx].name, g1, g2, iter->second.iCount);
 	}
-	fclose(SJFile); n = (int)SpliceJunctionMap.size();
+	fclose(SJFile);
 
-	return n;
+	return (int)SpliceJunctionMap.size();
 }
 
 void Mapping()

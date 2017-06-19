@@ -78,13 +78,13 @@ int main(int argc, char* argv[])
 {
 	fstream file;
 	stringstream ss;
+	int64_t iTotalIdy;
 	pair<int, int> IntPair;
 	map<string, string> RefSeqMap;
-	int64_t iTotalIdy, iIdenticalBase, iTotalLength;
 	string str, tmp, pre_qname, qname, qseq, chrname, chrseq, CIGAR;
 	int iFlag, rPos, gPos, MAPQ, num, rlen, chrlen, iTotal, iAln, iHit;
 
-	iTotal = iAln = 0; iTotalIdy = iIdenticalBase = iTotalLength = 0;
+	iTotal = iAln = 0; iTotalIdy = 0;
 	file.open("hg38s.fa", ios_base::in); // read reference sequences
 	if (!file.is_open()) fprintf(stderr, "error open file: hg38s.fa\n"), exit(0);
 
@@ -127,17 +127,15 @@ int main(int argc, char* argv[])
 		IntPair = CalSeqIdentity(rlen, chrlen, gPos, CIGAR, qseq, RefSeqMap[chrname]);
 		if (IntPair.second > 0)
 		{
-			iIdenticalBase += IntPair.first; iTotalLength += IntPair.second;
 			iTotalIdy += (1000 * IntPair.first / IntPair.second);
 		}
 		//else printf("%s\n", str.c_str());
-		if (iAln % 10000 == 0) fprintf(stderr, "\rsensitivity = %d / %d = %.3f, AvgSeqIdy = %.3f, AvgIdenticalBase = %.3f, AvgAlnLen = %.3f", iAln, iTotal, (1.0*iAln / iTotal + 0.0005), (1.0*iTotalIdy / iAln / 1000.0 + 0.0005), 1.*iIdenticalBase / iAln, 1.*iTotalLength / iAln);
+		if (iAln % 10000 == 0) fprintf(stderr, "\rsensitivity = %d / %d = %.3f, AvgSeqIdy = %.3f", iAln, iTotal, (1.0*iAln / iTotal + 0.0005), (1.0*iTotalIdy / iAln / 1000.0 + 0.0005));
 	}
 	file.close();
 	
-	if(iAln > 0) fprintf(stderr, "\rsensitivity = %d / %d = %.3f, AvgSeqIdy = %.3f, AvgIdenticalBase = %.3f, AvgAlnLen = %.3f\n\n", iAln, iTotal, (1.0*iAln / iTotal + 0.0005), (1.0*iTotalIdy / iAln / 1000.0 + 0.0005), 1.*iIdenticalBase / iAln, 1.*iTotalLength / iAln);
+	if(iAln > 0) fprintf(stderr, "\rsensitivity = %d / %d = %.3f, AvgSeqIdy = %.3f\n\n", iAln, iTotal, (1.0*iAln / iTotal + 0.0005), (1.0*iTotalIdy / iAln / 1000.0 + 0.0005));
 	else fprintf(stderr, "\rsensitivity = 0, AvgSeqIdy = 0\n");
-	//if (iTotalLength > 0) fprintf(stderr, "Identical_BasePairs / TotalAlnLength = %lld / %lld = %.3f\n", iIdenticalBase, iTotalLength, 1.0*iIdenticalBase / iTotalLength);
 
 	return 0;
 }

@@ -33,9 +33,9 @@ uint32_t CreateKmerID(const char* seq, short pos)
 
 vector<KmerItem_t> CreateKmerVecFromReadSeq(int len, char* seq)
 {
+	int count, head, tail;
 	vector<KmerItem_t> vec;
 	KmerItem_t WordPosition;
-	uint32_t count, head, tail;
 
 	tail = 0; count = 0; vec.clear();
 
@@ -108,7 +108,7 @@ vector<KmerPair_t> IdentifyCommonKmers(vector<KmerItem_t>& vec1, vector<KmerItem
 SeedPair_t GenerateSimplePairsFromCommonKmers(vector<KmerPair_t>& KmerPairVec)
 {
 	SeedPair_t SeedPair;
-	int i, j, l, max_len, PosDiff, n_pos, num;
+	int i, j, l, max_len, PosDiff, num;
 
 	SeedPair.bSimple = true; SeedPair.rLen = SeedPair.gLen = 0;
 
@@ -136,7 +136,7 @@ SeedPair_t GenerateLongestSimplePairsFromFragmentPair(int len1, char* frag1, int
 	SeedPair_t SeedPair;
 	vector<KmerPair_t> KmerPairVec;
 	vector<KmerItem_t> KmerVec1, KmerVec2;
-	int i, j, l, s, max_len, PosDiff, n_pos, num;
+	int i, j, l, s, max_len, PosDiff, num;
 
 	KmerVec1 = CreateKmerVecFromReadSeq(len1, frag1); 
 	KmerVec2 = CreateKmerVecFromReadSeq(len2, frag2);
