@@ -539,7 +539,7 @@ void *ReadMapping(void *arg)
 		pthread_mutex_lock(&LibraryLock);
 		if (gzCompressed) ReadNum = gzGetNextChunk(bSepLibrary, gzReadFileHandler1, gzReadFileHandler2, ReadArr);
 		else ReadNum = GetNextChunk(bSepLibrary, ReadFileHandler1, ReadFileHandler2, ReadArr);
-		fprintf(stderr, "\r%d %s tags have been processed in %lld seconds...", iTotalReadNum, (bPairEnd? "paired-end":"singled-end"), (time(NULL) - StartProcessTime));
+		fprintf(stderr, "\r%d %s tags have been processed in %ld seconds...", iTotalReadNum, (bPairEnd? "paired-end":"singled-end"), (time(NULL) - StartProcessTime));
 		pthread_mutex_unlock(&LibraryLock);
 		
 		if (ReadNum == 0) break;
