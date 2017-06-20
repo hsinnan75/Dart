@@ -16,7 +16,7 @@
 #include <zlib.h>
 #include <inttypes.h>
 
-#define ReadChunkSize 2000
+#define ReadChunkSize 4000
 
 #define KmerSize 8
 #define KmerPower 0x3FFF

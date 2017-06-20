@@ -180,12 +180,16 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 	char* buffer = NULL;
 	int i, j, len, dist = 0;
 
-	buffer = (char*)malloc((200 + read1.rlen + (read1.rlen >> 1)));
+	buffer = (char*)malloc((1024 + read1.rlen));
 	if (read1.score == 0)
 	{
 		myUnMapping++;
 		len = sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read1.header, read1.AlnReportArr[0].iFrag, read1.seq);
 		SamOutputVec.push_back(buffer);
+		//pthread_mutex_lock(&OutputLock);
+		//if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		//else gzwrite(gzOutput, buffer, len);
+		//pthread_mutex_unlock(&OutputLock);
 	}
 	else
 	{
@@ -209,6 +213,10 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 				}
 				else len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
 				SamOutputVec.push_back(buffer);
+				//pthread_mutex_lock(&OutputLock);
+				//if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+				//else gzwrite(gzOutput, buffer, len);
+				//pthread_mutex_unlock(&OutputLock);
 			}
 			if (!bMultiHit) break;
 		}
@@ -220,12 +228,16 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 	}
 	free(buffer);
 
-	buffer = (char*)malloc((200 + read2.rlen + (read2.rlen >> 1)));
+	buffer = (char*)malloc((1024 + read2.rlen));
 	if (read2.score == 0)
 	{
 		myUnMapping++;
 		len = sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read2.header, read2.AlnReportArr[0].iFrag, read2.seq);
 		SamOutputVec.push_back(buffer);
+		//pthread_mutex_lock(&OutputLock);
+		//if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		//else gzwrite(gzOutput, buffer, len);
+		//pthread_mutex_unlock(&OutputLock);
 	}
 	else
 	{
@@ -248,6 +260,10 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 				}
 				else len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read2.header, read2.AlnReportArr[j].iFrag, ChromosomeVec[read2.AlnReportArr[j].coor.ChromosomeIdx].name, read2.AlnReportArr[j].coor.gPos, read2.mapq, read2.AlnReportArr[j].coor.CIGAR.c_str(), (read2.AlnReportArr[j].coor.bDir ? seq : rseq), read2.rlen - read2.score, read2.score, read2.sub_score);
 				SamOutputVec.push_back(buffer);
+				//pthread_mutex_lock(&OutputLock);
+				//if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+				//else gzwrite(gzOutput, buffer, len);
+				//pthread_mutex_unlock(&OutputLock);
 			}
 			if (!bMultiHit) break;
 		}
@@ -265,13 +281,17 @@ void OutputSingledAlignments(ReadItem_t& read, int& myUniqueMapping, int& myUnMa
 	int len;
 	char* buffer = NULL;
 
-	buffer = (char*)malloc((200 + read.rlen + (read.rlen >> 1)));
+	buffer = (char*)malloc((1024 + read.rlen));
 
 	if (read.score == 0)
 	{
 		myUnMapping++;
 		len = sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t*\tAS:i:0\tXS:i:0\n", read.header, read.AlnReportArr[0].iFrag, read.seq);
 		SamOutputVec.push_back(buffer);
+		//pthread_mutex_lock(&OutputLock);
+		//if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+		//else gzwrite(gzOutput, buffer, len);
+		//pthread_mutex_unlock(&OutputLock);
 	}
 	else
 	{
@@ -292,6 +312,10 @@ void OutputSingledAlignments(ReadItem_t& read, int& myUniqueMapping, int& myUnMa
 				}
 				len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), read.rlen - read.score, read.score, read.sub_score);
 				SamOutputVec.push_back(buffer);
+				//pthread_mutex_lock(&OutputLock);
+				//if (OutputFileFormat == 0) fprintf(output, "%s", buffer);
+				//else gzwrite(gzOutput, buffer, len);
+				//pthread_mutex_unlock(&OutputLock);
 
 				if (!bMultiHit) break;
 			}
@@ -575,17 +599,13 @@ void *ReadMapping(void *arg)
 			}
 		}
 		myUniqueMapping = myUnMapping = myPairing = 0; SamOutputVec.clear();
-		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedAlignments(ReadArr[i], ReadArr[j], myUniqueMapping, myUnMapping, myPairing, SamOutputVec);
+		if (bPairEnd && ReadNum %2 == 0) for (i = 0; i != ReadNum; i += 2) OutputPairedAlignments(ReadArr[i], ReadArr[i+1], myUniqueMapping, myUnMapping, myPairing, SamOutputVec);
 		else for (i = 0; i != ReadNum; i++) OutputSingledAlignments(ReadArr[i], myUniqueMapping, myUnMapping, SamOutputVec);
 
 		pthread_mutex_lock(&OutputLock);
 		iTotalReadNum += ReadNum; iUniqueMapping += myUniqueMapping; iUnMapping += myUnMapping; iPaired += myPairing;
-		for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
-		{
-			if (OutputFileFormat == 0) fprintf(output, "%s", iter->c_str());
-			else gzwrite(gzOutput, iter->c_str(), iter->length());
-		}
-
+		if (OutputFileFormat == 0) for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++) fprintf(output, "%s", iter->c_str());
+		else for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)  gzwrite(gzOutput, iter->c_str(), iter->length());
 		pthread_mutex_unlock(&OutputLock);
 
 		for (i = 0; i != ReadNum; i++)
