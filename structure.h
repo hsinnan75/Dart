@@ -14,9 +14,9 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <zlib.h>
-#include <inttypes.h>
+//#include <inttypes.h>
 
-#define ReadChunkSize 2048
+#define ReadChunkSize 1000
 
 #define KmerSize 8
 #define KmerPower 0x3FFF
@@ -24,11 +24,11 @@
 using namespace std;
 
 typedef unsigned char ubyte_t;
-//typedef unsigned long long uint64_t;
+typedef unsigned long long uint64_t;
 typedef uint64_t bwtint_t;
-//typedef unsigned char uint8_t;
-//typedef unsigned short uint16_t;
-//typedef unsigned int uint32_t;
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
 
 typedef struct {
 	bwtint_t primary; // S^{-1}(0), or the primary index of BWT
