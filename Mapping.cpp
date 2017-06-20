@@ -174,7 +174,7 @@ void EvaluateMAPQ(ReadItem_t& read)
 	}
 }
 
-void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueMapping, int& myUnMapping, vector<string>& SamOutputVec)
+void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueMapping, int& myUnMapping, int& myPairing, vector<string>& SamOutputVec)
 {
 	char *seq, *rseq;
 	char* buffer = NULL;
@@ -204,7 +204,7 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 				if ((j = read1.AlnReportArr[i].PairedAlnCanIdx) != -1 && read2.AlnReportArr[j].AlnScore > 0)
 				{
 					dist = (int)(read2.AlnReportArr[j].coor.gPos - read1.AlnReportArr[i].coor.gPos + (read1.AlnReportArr[i].coor.bDir ? read2.rlen : 0 - read1.rlen));
-					if (i == read1.iBestAlnCanIdx) iPaired += 2;
+					if (i == read1.iBestAlnCanIdx) myPairing += 2;
 					len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t=\t%lld\t%d\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), read2.AlnReportArr[j].coor.gPos, dist, (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
 				}
 				else len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d\n", read1.header, read1.AlnReportArr[i].iFrag, ChromosomeVec[read1.AlnReportArr[i].coor.ChromosomeIdx].name, read1.AlnReportArr[i].coor.gPos, read1.mapq, read1.AlnReportArr[i].coor.CIGAR.c_str(), (read1.AlnReportArr[i].coor.bDir ? seq : rseq), read1.rlen - read1.score, read1.score, read1.sub_score);
@@ -515,9 +515,9 @@ void *ReadMapping(void *arg)
 	ReadItem_t* ReadArr = NULL;
 	vector<string> SamOutputVec;
 	vector<SeedPair_t> SeedPairVec1, SeedPairVec2;
-	int i, j, ReadNum, myUniqueMapping, myUnMapping;
 	map<pair<int64_t, int64_t>, SpliceJunction_t> LocalSJMap;
 	vector<AlignmentCandidate_t> AlignmentVec1, AlignmentVec2;
+	int i, j, ReadNum, myUniqueMapping, myUnMapping, myPairing;
 
 	ReadArr = new ReadItem_t[ReadChunkSize];
 	while (true)
@@ -574,13 +574,12 @@ void *ReadMapping(void *arg)
 				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}
-		myUniqueMapping = myUnMapping = 0;
-		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedAlignments(ReadArr[i], ReadArr[j], myUniqueMapping, myUnMapping, SamOutputVec);
+		myUniqueMapping = myUnMapping = myPairing = 0; SamOutputVec.clear();
+		if (bPairEnd && ReadNum %2 == 0) for (i = 0, j = 1; i != ReadNum; i += 2, j += 2) OutputPairedAlignments(ReadArr[i], ReadArr[j], myUniqueMapping, myUnMapping, myPairing, SamOutputVec);
 		else for (i = 0; i != ReadNum; i++) OutputSingledAlignments(ReadArr[i], myUniqueMapping, myUnMapping, SamOutputVec);
 
 		pthread_mutex_lock(&OutputLock);
-		iTotalReadNum += ReadNum; iUniqueMapping += myUniqueMapping; iUnMapping += myUnMapping;
-
+		iTotalReadNum += ReadNum; iUniqueMapping += myUniqueMapping; iUnMapping += myUnMapping; iPaired += myPairing;
 		for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
 		{
 			if (OutputFileFormat == 0) fprintf(output, "%s", iter->c_str());
@@ -589,7 +588,6 @@ void *ReadMapping(void *arg)
 
 		pthread_mutex_unlock(&OutputLock);
 
-		SamOutputVec.clear();
 		for (i = 0; i != ReadNum; i++)
 		{
 			delete[] ReadArr[i].header;
