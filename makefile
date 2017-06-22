@@ -14,11 +14,5 @@ main:		$(OBJECT)
 %.o:		%.cpp $(HEADER)
 			$(Compiler) $(FLAGS) -c $<
 
-eva:		GeneralEvaluation.cpp
-		$(Compiler) $(FLAGS) GeneralEvaluation.cpp -o eva
-
-FluxEva:	FluxEvaluation.cpp
-		$(Compiler) $(FLAGS) FluxEvaluation.cpp -o FluxEva
-		
 clean:
 		rm -f *.o *~
