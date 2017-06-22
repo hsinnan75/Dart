@@ -2,7 +2,6 @@
 #include <sys/time.h>
 #include "structure.h"
 
-#define MAPQ_COEF 30
 #define Max_MAPQ  50
 
 gzFile gzOutput;
