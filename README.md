@@ -34,7 +34,7 @@ For indexing a reference genome, DART requires the target genome file (in fasta 
   ```
 The above command is to index the genome file Ecoli.fa and store the index files begining with ecoli.
 
-Please note that if you find bwa_index does not work in your computer system, you may use bwa (http://bio-bwa.sourceforge.net/) to build the index files.
+Please note that if you find bwa_index does not work in your computer system, you may also use bwa (http://bio-bwa.sourceforge.net/) to build the index files.
   ```
   $ ./bwa index -p index_prefix xxxx.fa
   ```
