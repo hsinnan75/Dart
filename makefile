@@ -11,6 +11,10 @@ OBJECT		= $(SOURCE:%.cpp=%.o)
 
 main:		$(OBJECT)
 			$(Compiler) $(FLAGS) $(OBJECT) -o dart $(LIB)
+
+static:		$(OBJECT)
+			$(Compiler) $(FLAGS) -static $(OBJECT) -o dart_static $(LIB)
+                        
 %.o:		%.cpp $(HEADER)
 			$(Compiler) $(FLAGS) -c $<
 

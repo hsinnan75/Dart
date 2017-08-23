@@ -179,7 +179,9 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 	char* buffer = NULL;
 	int i, j, len, dist = 0;
 
-	buffer = (char*)malloc((1024 + read1.rlen));
+	if (read1.rlen < 1000) buffer = (char*)malloc((10000));
+	else buffer = (char*)malloc((read1.rlen * 10));
+
 	if (read1.score == 0)
 	{
 		myUnMapping++;
@@ -227,7 +229,9 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 	}
 	free(buffer);
 
-	buffer = (char*)malloc((1024 + read2.rlen));
+	if (read2.rlen < 1000) buffer = (char*)malloc((10000));
+	else buffer = (char*)malloc((read2.rlen * 10));
+
 	if (read2.score == 0)
 	{
 		myUnMapping++;
@@ -280,7 +284,8 @@ void OutputSingledAlignments(ReadItem_t& read, int& myUniqueMapping, int& myUnMa
 	int len;
 	char* buffer = NULL;
 
-	buffer = (char*)malloc((1024 + read.rlen));
+	if(read.rlen < 1000) buffer = (char*)malloc((10000));
+	else buffer = (char*)malloc((read.rlen*10));
 
 	if (read.score == 0)
 	{
