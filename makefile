@@ -10,6 +10,7 @@ HEADER		= structure.h
 OBJECT		= $(SOURCE:%.cpp=%.o)
 
 all:		main index
+
 main:		$(OBJECT)
 			$(Compiler) $(FLAGS) $(OBJECT) -o dart $(LIB)
 
