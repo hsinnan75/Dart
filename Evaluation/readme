@@ -1,0 +1,26 @@
+Performance Evaluation
+
+0. Please type 'make' to compile the three performance evaluation programs.
+Usage: $make
+
+1. FluxEva: It is used to estimate the accuracy of read alignments of
+simualted datasets. It checks each alignment coordinate and compares with
+the actual transcript-level coordinate. It does not consider alignments with
+MAPQ = 0.
+
+Usage: $./FluxEva <SamFile>
+
+2. eva: It is used to estimate the sensitivity and sequence identity of read
+alignments of all datasets. It parses the CIGAR field and rebuild the pairwise
+sequence alignment between the read sequence and the target genome. The
+target genome is hg38.fa by default (Hg38).
+
+Usage: $./eva <SamFile>
+
+3. SJ_Eva: It is used to estimate the accuracy of splice junction
+predictions of each aligner. It reads the real splice junctions
+(junctions.txt) and checks each predicted splice junction whether it is
+within the boundary of real splice junctions by 5 base pairs.
+
+Usage: $./SJ_Eva <SJ_file>
+
