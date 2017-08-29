@@ -1094,7 +1094,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if ((read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos < 0) read.AlnReportArr[i].AlnScore = 0;
+			if ((read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
 				read.iBestAlnCanIdx = i;
