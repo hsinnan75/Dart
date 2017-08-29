@@ -13,7 +13,8 @@ Usage: $./FluxEva <SamFile>
 2. eva: It is used to estimate the sensitivity and sequence identity of read
 alignments of all datasets. It parses the CIGAR field and rebuild the pairwise
 sequence alignment between the read sequence and the target genome. The
-target genome is hg38.fa by default (Hg38).
+target genome is hg38.fa by default (hg38.fa can be downloaded at
+http://bioapp.iis.sinica.edu.tw/~arith/Dart/Evalution/).
 
 Usage: $./eva <SamFile>
 
