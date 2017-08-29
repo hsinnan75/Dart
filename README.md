@@ -16,6 +16,10 @@ Current version: 1.1.0. (Updated: 2017/06/20) Please use the command
   ```
 to download the package of DART.
 
+# Compiling
+
+To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and 'make index' to compile bwa_index
+
 # Installation
 
 We provide the executable file, please type 
