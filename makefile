@@ -18,5 +18,7 @@ static:		$(OBJECT)
 %.o:		%.cpp $(HEADER)
 			$(Compiler) $(FLAGS) -c $<
 
+index:
+		make -C BWT_Index && mv BWT_Index/bwa_index .
 clean:
 		rm -f *.o *~
