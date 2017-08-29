@@ -18,7 +18,7 @@ to download the package of DART.
 
 # Changes
 
-version 1.1.2: fix a bug in the alignment report (this bug may report wrong alignment coordinates).
+version 1.1.2: fix a bug in the alignment report.
 
 # Compiling
 
