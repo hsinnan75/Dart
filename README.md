@@ -22,7 +22,7 @@ version 1.1.2: fix a bug in the alignment report (this bug may report wrong alig
 
 # Compiling
 
-To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and 'make index' to compile bwa_index. If the compilation or the program fails, please contact me (arith@iis.sinica.edu.tw).
+To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and bwa_index. If the compilation or the program fails, please contact me (arith@iis.sinica.edu.tw).
 
 # Installation
 
