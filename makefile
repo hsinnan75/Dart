@@ -9,6 +9,7 @@ SOURCE		= main.cpp Mapping.cpp AlignmentCandidates.cpp GetData.cpp tools.cpp Pai
 HEADER		= structure.h
 OBJECT		= $(SOURCE:%.cpp=%.o)
 
+all:		main index
 main:		$(OBJECT)
 			$(Compiler) $(FLAGS) $(OBJECT) -o dart $(LIB)
 
@@ -20,5 +21,6 @@ static:		$(OBJECT)
 
 index:
 		make -C BWT_Index && mv BWT_Index/bwa_index .
+
 clean:
-		rm -f *.o *~
+		rm -f *.o *~ && make clean -C BWT_Index

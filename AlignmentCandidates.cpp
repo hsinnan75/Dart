@@ -99,11 +99,14 @@ Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, 
 		reverse(cigar_vec.begin(), cigar_vec.end());
 
 		iter = ChrLocMap.lower_bound(gPos);
-		coor.gPos = iter->first - end_gPos + 1; coor.ChromosomeIdx = iter->second;
-		//if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, gPos, coor.gPos);
+		coor.ChromosomeIdx = iter->second;
+		coor.gPos = iter->first - end_gPos + 1;
+		if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, gPos, coor.gPos);
 	}
-	//if (bDebugMode) printf("gPos: %lld --> %lld %s\n", gPos, coor.gPos, (coor.bDir ? "Forward" : "Reverse"));
-
+	//if (coor.gPos < 0)
+	//{
+	//	fprintf(stderr, "\ngPos: %lld --> %lld %s\n", gPos, coor.gPos, (coor.bDir ? "Forward" : "Reverse"));
+	//}
 	coor.CIGAR = GenerateCIGAR(cigar_vec);
 
 	return coor;
@@ -1091,7 +1094,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec);
+			if ((read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos < 0) read.AlnReportArr[i].AlnScore = 0;
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
 				read.iBestAlnCanIdx = i;
