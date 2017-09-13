@@ -225,5 +225,11 @@ extern int ProcessSimpleSequencePair(char* seq, SeedPair_t& sp, vector<pair<int,
 extern int ProcessNormalSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >& cigar_vec);
 //extern void IdentifyCommonKmers(int MaxShift, vector<KmerItem_t>& vec1, vector<KmerItem_t>& vec2, vector<KmerPair_t>& KmerPairVec);
 
-// PairwiseAlignment.cpp
-extern void PairwiseSequenceAlignment(int m, string& s1, int n, string& s2);
+// nw_alignment.cpp
+extern void nw_alignment(int m, string& s1, int n, string& s2);
+
+// edlib_alignment.cpp
+extern void edlib_alignment(int m, string& s1, int n, string& s2);
+
+// ksw2_alignment.cpp
+extern void ksw2_alignment(int m, string& s1, int n, string& s2);

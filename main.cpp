@@ -4,7 +4,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.1.2";
+const char* VersionStr = "1.2.0";
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
 bool bDebugMode, bPairEnd, FastQFormat, bMultiHit, bUnique, gzCompressed;
 const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };

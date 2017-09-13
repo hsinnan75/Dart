@@ -15,7 +15,7 @@ double max(short x, short y, short z)
 	return x > y ? max(x, z) : max(y, z);
 }
 
-void PairwiseSequenceAlignment(int m, string& s1, int n, string& s2)
+void nw_alignment(int m, string& s1, int n, string& s2)
 {
 	int i, j;
 
