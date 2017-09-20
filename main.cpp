@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 	string parameter, str;
 
 	MaxGaps = 5;
-	iThreadNum = 16;
+	iThreadNum = 4;
 	bPairEnd = false;
 	bDebugMode = false;
 	bMultiHit = false;
