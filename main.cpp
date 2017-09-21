@@ -14,7 +14,7 @@ void ShowProgramUsage(const char* program)
 {
 	fprintf(stderr, "\nDART v%s\n\n", VersionStr);
 	fprintf(stderr, "Usage: %s -i Index_Prefix -f ReadFile [-f2 ReadFile2]\n\n", program);
-	fprintf(stderr, "Options: -t INT        number of threads [16]\n");
+	fprintf(stderr, "Options: -t INT        number of threads [4]\n");
 	fprintf(stderr, "         -f            files with #1 mates reads\n");
 	fprintf(stderr, "         -f2           files with #2 mates reads\n");
 	fprintf(stderr, "         -o            alignment filename for output [stdout]\n");
