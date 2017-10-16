@@ -166,8 +166,8 @@ int ProcessNormalSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> 
 		}
 		else
 		{
-			//nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
-			ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
+			nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
+			//ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
 			//edlib_alignment(sp.rLen, frag1, sp.gLen, frag2);
 			score = AddNewCigarElements(frag1, frag2, cigar_vec);
 		}
@@ -189,8 +189,8 @@ int ProcessHeadSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 	if (sp.rLen == sp.gLen && (sp.rLen - (score = CalFragPairIdenticalBases(sp.rLen, (char*)frag1.c_str(), (char*)frag2.c_str()))) <= (sp.rLen < 25 ? 5 : (int)(sp.rLen*0.2))) cigar_vec.push_back(make_pair(sp.rLen, 'M'));
 	else
 	{
-		//nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
-		ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
+		nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
+		//ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
 		//edlib_alignment(sp.rLen, frag1, sp.gLen, frag2);
 
 		//Case1: -X..X vs XX..X (leading gaps in the read block)
@@ -226,8 +226,8 @@ int ProcessTailSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 	if (sp.rLen == sp.gLen && (sp.rLen - (score = CalFragPairIdenticalBases(sp.rLen, (char*)frag1.c_str(), (char*)frag2.c_str()))) <= (sp.rLen < 25 ? 5 : (int)(sp.rLen*0.2))) cigar_vec.push_back(make_pair(sp.rLen, 'M'));
 	else
 	{
-		//nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
-		ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
+		nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
+		//ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
 		//edlib_alignment(sp.rLen, frag1, sp.gLen, frag2);
 
 		//Case1: X..X- vs X..XX (tailing gaps in the read block)

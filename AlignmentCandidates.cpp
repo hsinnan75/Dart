@@ -389,8 +389,8 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 
 	frag1.resize(rGaps); strncpy((char*)frag1.c_str(), seq + LeftSeed.rPos + LeftSeed.rLen, rGaps);
 	frag2.resize(rGaps); strncpy((char*)frag2.c_str(), RefSequence + LeftSeed.gPos + LeftSeed.gLen, rGaps);
-	//nw_alignment(rGaps, frag1, rGaps, frag2);
-	ksw2_alignment(rGaps, frag1, rGaps, frag2);
+	nw_alignment(rGaps, frag1, rGaps, frag2);
+	//ksw2_alignment(rGaps, frag1, rGaps, frag2);
 	//edlib_alignment(rGaps, frag1, rGaps, frag2);
 	// identify tailing gaps
 	len = (int)frag1.length(); i = len - 1; while (frag2[i] == '-') i--;
@@ -414,8 +414,8 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 
 	frag3.resize(rGaps); strncpy((char*)frag3.c_str(), seq + LeftSeed.rPos + LeftSeed.rLen, rGaps);
 	frag4.resize(rGaps); strncpy((char*)frag4.c_str(), RefSequence + RightSeed.gPos - rGaps, rGaps);
-	//nw_alignment(rGaps, frag3, rGaps, frag4);
-	ksw2_alignment(rGaps, frag3, rGaps, frag4);
+	nw_alignment(rGaps, frag3, rGaps, frag4);
+	//ksw2_alignment(rGaps, frag3, rGaps, frag4);
 	//edlib_alignment(rGaps, frag3, rGaps, frag4);
 	// identify heading gaps
 	i = 0; while (frag4[i] == '-') i++;
