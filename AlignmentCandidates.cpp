@@ -37,20 +37,20 @@ bool CompByFirstInt(const pair<int, int>& p1, const pair<int, int>& p2)
 string GenerateCIGAR(vector<pair<int, char> >& cigar_vec)
 {
 	int i, num, c;
-	char state, buf[8];
 	string cigar_str;
+	char state, buf[10];
 
 	for (state = '\0', num = (int)cigar_vec.size(), c = 0, i = 0; i != num; i++)
 	{
 		if (cigar_vec[i].second != state)
 		{
-			if (c > 0) sprintf(buf, "%d%c", c, state), cigar_str += buf;
+			if (c > 0) sprintf(buf, "%d%c\0", c, state), cigar_str += buf;
 
 			c = cigar_vec[i].first; state = cigar_vec[i].second;
 		}
 		else c += cigar_vec[i].first;
 	}
-	if (c > 0) sprintf(buf, "%d%c", c, state), cigar_str += buf;
+	if (c > 0) sprintf(buf, "%d%c\0", c, state), cigar_str += buf;
 
 	//if (bDebugMode) printf("CIGAR=%s\n\n\n", cigar_str.c_str());
 
@@ -1098,7 +1098,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if ((read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
+			if (cigar_vec.size() == 0 || (read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
 				read.iBestAlnCanIdx = i;
