@@ -766,15 +766,15 @@ int CheckSpliceJunction(int rlen, char* seq, uint8_t* EncodeSeq, vector<SeedPair
 			}
 		}
 	}
-	//if (bDebugMode)
-	//{
-	//	if (best_type != -1)
-	//	{
-	//		printf("Splice junction type = %s\n", SpliceJunctionArr[best_type]);
-	//		for (num = (int)SeedVec.size(), i = 0; i < num; i++) ShowFragmentPair(seq, SeedVec[i]);
-	//	}
-	//	else printf("Cannot find SJ!!\n");
-	//}
+	if (bDebugMode)
+	{
+		if (best_type != -1)
+		{
+			printf("Splice junction type = %s\n", SpliceJunctionArr[best_type]);
+			for (num = (int)SeedVec.size(), i = 0; i < num; i++) ShowFragmentPair(seq, SeedVec[i]);
+		}
+		else printf("Cannot find SJ!!\n");
+	}
 	return best_type;
 }
 
@@ -1029,6 +1029,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 		read.AlnReportArr = new AlignmentReport_t[read.CanNum];
 		for (i = 0; i != (int)AlignmentVec.size(); i++)
 		{
+			read.AlnReportArr[i].SJtype = -1;
 			read.AlnReportArr[i].AlnScore = 0;
 			read.AlnReportArr[i].PairedAlnCanIdx = AlignmentVec[i].PairedAlnCanIdx;
 
@@ -1044,7 +1045,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			//printf("After IdentifyMissingSeeds\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			SeedExtension(read.seq, AlignmentVec[i].SeedVec);
 			//printf("After SeedExtension\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
-			AlignmentVec[i].SJtype = CheckSpliceJunction(read.rlen, read.seq, read.EncodeSeq, AlignmentVec[i].SeedVec);
+			read.AlnReportArr[i].SJtype = AlignmentVec[i].SJtype = CheckSpliceJunction(read.rlen, read.seq, read.EncodeSeq, AlignmentVec[i].SeedVec);
 			//printf("After CheckSpliceJunction\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
 			IdentifyNormalPairs(read.rlen, read.seq, AlignmentVec[i].SeedVec); // fill missing framgment pairs between simple pairs
 			//printf("After IdentifyNormalPairs\n"), ShowSeedInfo(AlignmentVec[i].SeedVec);
@@ -1099,6 +1100,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
 			if (cigar_vec.size() == 0 || (read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
+
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
 				read.iBestAlnCanIdx = i;

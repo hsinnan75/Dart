@@ -134,6 +134,7 @@ typedef struct
 typedef struct
 {
 	int AlnScore;
+	int SJtype;
 	int iFrag; // sam flag
 	int PairedAlnCanIdx;
 	Coordinate_t coor;

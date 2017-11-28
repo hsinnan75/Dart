@@ -17,6 +17,7 @@ Current version: 1.2.0 (Updated: 2017/09/13) Please use the command
 to download the package of DART.
 
 # Changes
+version 1.2.3: fix the bug when read number exceeds 2^23.
 
 version 1.2.0: Add ksw2 and edlib alignment method to replace the Needleman-Wunsch algorithm.
 
