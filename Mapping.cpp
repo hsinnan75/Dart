@@ -670,35 +670,26 @@ int OutputSpliceJunctions()
 	return (int)SpliceJunctionMap.size();
 }
 
+bool CheckReadFormat(const char* filename)
+{
+	char buf[1];
+	gzFile file = gzopen(filename, "rb");
+	gzread(file, buf, 1); gzclose(file);
+
+	if (buf[0] == '@') return true; // fastq
+	else return false;
+}
+
 void Mapping()
 {
 	int i;
-
-	if (gzCompressed)
-	{
-		gzReadFileHandler1 = gzopen(ReadFileName, "rb");
-		if (ReadFileName2 != NULL)
-		{
-			bSepLibrary = bPairEnd = true;
-			gzReadFileHandler2 = gzopen(ReadFileName2, "rb");
-		}
-	}
-	else
-	{
-		ReadFileHandler1 = fopen(ReadFileName, "r");
-		if (ReadFileName2 != NULL)
-		{
-			bSepLibrary = bPairEnd = true;
-			ReadFileHandler2 = fopen(ReadFileName2, "r");
-		}
-	}
+	pthread_t *ThreadArr = new pthread_t[iThreadNum];
 
 	if (OutputFileName != NULL)
 	{
 		if (OutputFileFormat == 0) output = fopen(OutputFileName, "w");
 		else gzOutput = gzopen(OutputFileName, "wb");
 	}
-
 	if (bDebugMode) iThreadNum = 1;
 	else
 	{
@@ -719,25 +710,59 @@ void Mapping()
 	}
 
 	StartProcessTime = time(NULL);
-	pthread_t *ThreadArr = new pthread_t[iThreadNum];
-	for (i = 0; i < iThreadNum; i++) pthread_create(&ThreadArr[i], NULL, ReadMapping, NULL);
-	for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
-	delete[] ThreadArr;
-
-	if (gzCompressed) gzclose(gzReadFileHandler1);
-	else fclose(ReadFileHandler1);
-	if (ReadFileName2 != NULL)
+	for (int LibraryID = 0; LibraryID < (int)ReadFileNameVec1.size(); LibraryID++)
 	{
-		if (gzCompressed) gzclose(gzReadFileHandler2);
-		else fclose(ReadFileHandler2);
+		gzReadFileHandler1 = gzReadFileHandler2 = NULL; ReadFileHandler1 = ReadFileHandler2 = NULL;
+
+		if (ReadFileNameVec1[LibraryID].substr(ReadFileNameVec1[LibraryID].find_last_of('.') + 1) == "gz") gzCompressed = true;
+		else gzCompressed = false;
+
+		FastQFormat = CheckReadFormat(ReadFileNameVec1[LibraryID].c_str());
+		//fprintf(stderr, "gz=%s, format=%s\n", gzCompressed ? "Yes" : "No", FastQFormat ? "Fastq" : "Fasta");
+
+		if (gzCompressed) gzReadFileHandler1 = gzopen(ReadFileNameVec1[LibraryID].c_str(), "rb");
+		else ReadFileHandler1 = fopen(ReadFileNameVec1[LibraryID].c_str(), "r");
+
+		if (ReadFileNameVec1.size() == ReadFileNameVec2.size())
+		{
+			bSepLibrary = bPairEnd = true;
+			if (FastQFormat == CheckReadFormat(ReadFileNameVec2[LibraryID].c_str()))
+			{
+				if (gzCompressed) gzReadFileHandler2 = gzopen(ReadFileNameVec2[LibraryID].c_str(), "rb");
+				else ReadFileHandler2 = fopen(ReadFileNameVec2[LibraryID].c_str(), "r");
+			}
+			else
+			{
+				fprintf(stderr, "Error! %s and %s are with different format...\n", (char*)ReadFileNameVec1[LibraryID].c_str(), (char*)ReadFileNameVec2[LibraryID].c_str());
+				continue;
+			}
+		}
+		else bSepLibrary = false;
+
+		if (ReadFileHandler1 == NULL && gzReadFileHandler1 == NULL) continue;
+		if (bSepLibrary && ReadFileHandler2 == NULL && gzReadFileHandler2 == NULL) continue;
+
+		for (i = 0; i < iThreadNum; i++) pthread_create(&ThreadArr[i], NULL, ReadMapping, NULL);
+		for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
+
+		if (gzCompressed)
+		{
+			if (gzReadFileHandler1 != NULL) gzclose(gzReadFileHandler1);
+			if (gzReadFileHandler2 != NULL) gzclose(gzReadFileHandler2);
+		}
+		else
+		{
+			if (ReadFileHandler1 != NULL) fclose(ReadFileHandler1);
+			if (ReadFileHandler2 != NULL) fclose(ReadFileHandler2);
+		}
 	}
 	fprintf(stderr, "\rAll the %lld %s reads have been processed in %lld seconds.\n", (long long)iTotalReadNum, (bPairEnd? "paired-end":"single-end"), (long long)(time(NULL) - StartProcessTime));
+	delete[] ThreadArr;
 
 	if (OutputFileName != NULL)
 	{
 		if (OutputFileFormat == 0) fclose(output);
 		else if (OutputFileFormat == 1) gzclose(gzOutput);
-		//else output = fopen(OutputFileName, "wb");
 	}
 
 	if(iTotalReadNum > 0)

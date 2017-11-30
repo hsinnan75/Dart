@@ -175,8 +175,9 @@ extern char SJFileName[256];
 extern const char *VersionStr;
 extern const char* SpliceJunctionArr[4];
 extern map<int64_t, int> ChrLocMap, ExonMap;
+extern vector<string> ReadFileNameVec1, ReadFileNameVec2;
+extern char *RefSequence, *GenomeFileName, *IndexFileName, *OutputFileName;
 extern bool bDebugMode, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique, gzCompressed;
-extern char *RefSequence, *GenomeFileName, *IndexFileName, *ReadFileName, *ReadFileName2, *OutputFileName;
 
 extern int iThreadNum, MaxIntronSize, OutputFileFormat;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;

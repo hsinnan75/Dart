@@ -17,6 +17,8 @@ Current version: 1.2.0 (Updated: 2017/09/13) Please use the command
 to download the package of DART.
 
 # Changes
+version 1.2.4: Allow multiple read files as the input.
+
 version 1.2.3: fix the bug when read number exceeds 2^23.
 
 version 1.2.0: Add ksw2 and edlib alignment method to replace the Needleman-Wunsch algorithm.
@@ -57,7 +59,12 @@ To map short reads, DART requires the the index files of the reference genome an
  $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.sam
   ```
 
- case 2: gzip compressed output
+ case 2: multiple input 
+  ```
+ $ ./dart -i ecoli -f ReadFileA_1.fq ReadFileB_1.fq ReadFileC_1.fq -f2 ReadFileA_2.fq ReadFileB_2.fq ReadFileC_2.fq -o out.sam
+  ```
+
+ case 3: gzip compressed output
   ```
  $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.sam.gz
   ```
