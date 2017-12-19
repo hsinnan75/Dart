@@ -1,9 +1,9 @@
 #include "structure.h"
 
 const short MaxPenalty = -32768;
-const short OPEN_GAP = -1;
-const short EXTEND_GAP = -1;
-const short NEW_GAP = -2; //OPEN_GAP + EXTEND_GAP;
+const short OPEN_GAP = -1.5;
+const short EXTEND_GAP = -0.5;
+const short NEW_GAP = -2.0; //OPEN_GAP + EXTEND_GAP;
 
 double max(short x, short y)
 {
@@ -54,7 +54,7 @@ void nw_alignment(int m, string& s1, int n, string& s2)
 			t[i][j] = max(t[i - 1][j] + EXTEND_GAP, s[i - 1][j] + NEW_GAP);
 			//if (s1[i - 1] == 'N' || s2[j - 1] == 'N') s[i][j] = max(s[i - 1][j - 1] + 1, r[i][j], t[i][j]);
 			//else s[i][j] = max(s[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 1 : -1), r[i][j], t[i][j]);
-			s[i][j] = max(s[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 1 : -1), r[i][j], t[i][j]);
+			s[i][j] = max(s[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 1.5 : -1.5), r[i][j], t[i][j]);
 		}
 	}
 
