@@ -25,6 +25,15 @@ version 1.2.0: Add ksw2 and edlib alignment method to replace the Needleman-Wuns
 
 version 1.1.2: fix a bug in the alignment report.
 
+# Get updates
+
+We update DART from time to time, please check if new version is available by using the following commands.
+
+  ```
+  $ git fetch
+  $ git merge origin/master master
+  ```
+
 # Compiling
 
 To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and bwa_index. If the compilation or the program fails, please contact me (arith@iis.sinica.edu.tw).
