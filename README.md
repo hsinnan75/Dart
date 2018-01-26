@@ -10,13 +10,15 @@ DART adopts a divide-and-conquer strategy to handle RNA-Seq transcript alignment
 
 # Download
 
-Current version: 1.2.0 (Updated: 2017/09/13) Please use the command 
+Please use the command 
   ```
   $ git clone https://github.com/hsinnan75/Dart.git
   ```
 to download the package of DART.
 
 # Changes
+version 1.2.5: Fix the alignment when DNA sequences are shown in lower case.
+
 version 1.2.4: Allow multiple read files as the input.
 
 version 1.2.3: fix the bug when read number exceeds 2^23.
