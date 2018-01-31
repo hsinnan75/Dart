@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.2.6: Fix the alignment of segment pairs with multiple mismatches.
+
 version 1.2.5: Fix the alignment when DNA sequences are shown in lower case.
 
 version 1.2.4: Allow multiple read files as the input.
