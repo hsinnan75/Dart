@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.2.7: Add an update command.
+
 version 1.2.6: Fix the alignment of segment pairs with multiple mismatches.
 
 version 1.2.5: Fix the alignment when DNA sequences are shown in lower case.
@@ -33,11 +35,16 @@ version 1.1.2: fix a bug in the alignment report.
 
 We update DART from time to time, please check if new version is available by using the following commands.
 
+with Kart version 1.2.7 up
+  ```
+  $ ./dart update 
+  ```
+or
   ```
   $ git fetch
   $ git merge origin/master master
+  $ make
   ```
-
 # Compiling
 
 To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and bwa_index. If the compilation or the program fails, please contact me (arith@iis.sinica.edu.tw).
