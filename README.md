@@ -47,7 +47,7 @@ or
   ```
 # Compiling
 
-To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and bwa_index. If the compilation or the program fails, please contact me (arith@iis.sinica.edu.tw).
+To compile dart and the index tool, please change to dart's folder and just type 'make' to compile dart and bwt_index. If the compilation or the program fails, please contact me (arith@iis.sinica.edu.tw).
 
 # Installation
 
@@ -63,13 +63,13 @@ to run the program. Or you can type 'make' to build the executable file.
 To index a reference genome, DART requires the target genome file (in fasta format) and the prefix of the index files (including the directory path).
 
   ```
-  $ ./bwa_index ref_file[ex.ecoli.fa] index_prefix[ex. Ecoli]
+  $ ./bwt_index ref_file[ex.ecoli.fa] index_prefix[ex. Ecoli]
   ```
 The above command is to index the genome file Ecoli.fa and store the index files begining with ecoli.
 
-Please note that if you find bwa_index does not work in your computer system, you may also use bwa (http://bio-bwa.sourceforge.net/) to build the index files.
+Please note that if you find bwt_index does not work in your computer system, you may also use bwa (http://bio-bwa.sourceforge.net/) to build the index files.
   ```
-  $ ./bwa index -p index_prefix xxxx.fa
+  $ ./bwa index -p index_prefix ref.fa
   ```
 
 To map short reads, DART requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
