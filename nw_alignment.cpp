@@ -1,9 +1,9 @@
 #include "structure.h"
 
-const short MaxPenalty = -32768;
-const short OPEN_GAP = -1.5;
-const short EXTEND_GAP = -0.5;
-const short NEW_GAP = -2.0; //OPEN_GAP + EXTEND_GAP;
+const float MaxPenalty = -65536;
+const float OPEN_GAP = -1;
+const float EXTEND_GAP = -0.5;
+const float NEW_GAP = -1.5;
 
 double max(short x, short y)
 {
@@ -21,15 +21,15 @@ void nw_alignment(int m, string& s1, int n, string& s2)
 
 	m = m + 1, n = n + 1;
 
-	short** r = new short*[m];
-	short** t = new short*[m];
-	short** s = new short*[m];
+	float** r = new float*[m];
+	float** t = new float*[m];
+	float** s = new float*[m];
 
 	for (i = 0; i < m; i++)
 	{
-		r[i] = new short[n];
-		t[i] = new short[n];
-		s[i] = new short[n];
+		r[i] = new float[n];
+		t[i] = new float[n];
+		s[i] = new float[n];
 	}
 
 	// initialization
@@ -37,13 +37,13 @@ void nw_alignment(int m, string& s1, int n, string& s2)
 	for (i = 1; i < m; i++)
 	{
 		r[i][0] = MaxPenalty;
-		s[i][0] = t[i][0] = NEW_GAP + i*EXTEND_GAP;
+		s[i][0] = t[i][0] = OPEN_GAP + i*EXTEND_GAP;
 	}
 
 	for (j = 1; j < n; j++)
 	{
 		t[0][j] = MaxPenalty;
-		s[0][j] = r[0][j] = NEW_GAP + j*EXTEND_GAP;
+		s[0][j] = r[0][j] = OPEN_GAP + j*EXTEND_GAP;
 	}
 
 	for (i = 1; i < m; i++)

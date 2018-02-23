@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.2.8: Fix the alignment of segment pairs with poor sequence identity.
+
 version 1.2.7: Add an update command.
 
 version 1.2.6: Fix the alignment of segment pairs with multiple mismatches.

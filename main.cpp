@@ -4,7 +4,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.2.7";
+const char* VersionStr = "1.2.8";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;

@@ -177,6 +177,43 @@ int ProcessNormalSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> 
 	return score;
 }
 
+bool CheckLocalAlignmentQuality(string& aln1, string& aln2)
+{
+	int i, n, mis, len, AlnType, iStatus;
+
+	AlnType = -1; len = (int)aln1.length(); n = mis = iStatus = 0;
+	for (i = 0; i < len; i++)
+	{
+		if (aln1[i] == '-') // type 0
+		{
+			if (AlnType != 0)
+			{
+				AlnType = 0;
+				iStatus++;
+			}
+		}
+		else if (aln2[i] == '-') // type 1
+		{
+			if (AlnType != 1)
+			{
+				AlnType = 1;
+				iStatus++;
+			}
+		}
+		else // type 2
+		{
+			n++; if (aln1[i] != aln2[i]) mis++;
+			if (AlnType != 2)
+			{
+				AlnType = 2;
+				iStatus++;
+			}
+		}
+	}
+	if (iStatus >= 4 || (mis >= 3 && mis >= (int)(n*0.3))) return false;
+	else return true;
+}
+
 int ProcessHeadSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >& cigar_vec)
 {
 	int n, score;
@@ -197,23 +234,30 @@ int ProcessHeadSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 		nw_alignment(sp.rLen, frag1, sp.gLen, frag2);
 		//ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
 		//edlib_alignment(sp.rLen, frag1, sp.gLen, frag2);
-
-		//Case1: -X..X vs XX..X (leading gaps in the read block)
-		int p = 0; while (frag1[p] == '-') p++;
-		if (p > 0) // shrink the genome block
+		if (CheckLocalAlignmentQuality(frag1, frag2) == false)
 		{
-			frag1.erase(0, p); frag2.erase(0, p);
-			sp.gPos += p; sp.gLen -= p;
+			cigar_vec.push_back(make_pair(sp.rLen, 'S'));
+			score = 0;
 		}
-		//Case2: XX..X vs -X..X (leading gaps in the genome block)
-		p = 0; while (frag2[p] == '-') p++;
-		if (p > 0) // shrink the read block
+		else
 		{
-			frag1.erase(0, p); frag2.erase(0, p);
-			sp.rPos += p; sp.rLen -= p; cigar_vec.push_back(make_pair(p, 'S'));
+			//Case1: -X..X vs XX..X (leading gaps in the read block)
+			int p = 0; while (frag1[p] == '-') p++;
+			if (p > 0) // shrink the genome block
+			{
+				frag1.erase(0, p); frag2.erase(0, p);
+				sp.gPos += p; sp.gLen -= p;
+			}
+			//Case2: XX..X vs -X..X (leading gaps in the genome block)
+			p = 0; while (frag2[p] == '-') p++;
+			if (p > 0) // shrink the read block
+			{
+				frag1.erase(0, p); frag2.erase(0, p);
+				sp.rPos += p; sp.rLen -= p; cigar_vec.push_back(make_pair(p, 'S'));
+			}
+			score = AddNewCigarElements(frag1, frag2, cigar_vec);
+			//if (bDebugMode) printf("H2:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 		}
-		score = AddNewCigarElements(frag1, frag2, cigar_vec);
-		//if (bDebugMode) printf("H2:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 	}
 	return score;
 }
@@ -239,24 +283,32 @@ int ProcessTailSequencePair(char* seq, SeedPair_t& sp, vector<pair<int, char> >&
 		//ksw2_alignment(sp.rLen, frag1, sp.gLen, frag2);
 		//edlib_alignment(sp.rLen, frag1, sp.gLen, frag2);
 
-		//Case1: X..X- vs X..XX (tailing gaps in the read block)
-		int p = (int)frag1.length() - 1, c = 0; while (frag1[p--] == '-') c++;
-		if (c > 0) // shrink the genome block
+		if (CheckLocalAlignmentQuality(frag1, frag2) == false)
 		{
-			frag1.resize((int)frag1.length() - c); frag2.resize((int)frag2.length() - c);
-			sp.gLen -= c;
-			//if (bDebugMode) printf("find %d tailing gaps in the read block\n", c);
+			cigar_vec.push_back(make_pair(sp.rLen, 'S'));
+			score = 0;
 		}
-		//Case2: X..XX vs X..X- (tailing gaps in the genome block)
-		p = (int)frag2.length() - 1, c = 0; while (frag2[p--] == '-') c++;
-		if (c > 0) // shrink the read block
+		else
 		{
-			frag1.resize((int)frag1.length() - c); frag2.resize((int)frag2.length() - c);
-			sp.rLen -= c;
-			if (bDebugMode) printf("find %d tailing gaps in the genome block\n", c);
+			//Case1: X..X- vs X..XX (tailing gaps in the read block)
+			int p = (int)frag1.length() - 1, c = 0; while (frag1[p--] == '-') c++;
+			if (c > 0) // shrink the genome block
+			{
+				frag1.resize((int)frag1.length() - c); frag2.resize((int)frag2.length() - c);
+				sp.gLen -= c;
+				//if (bDebugMode) printf("find %d tailing gaps in the read block\n", c);
+			}
+			//Case2: X..XX vs X..X- (tailing gaps in the genome block)
+			p = (int)frag2.length() - 1, c = 0; while (frag2[p--] == '-') c++;
+			if (c > 0) // shrink the read block
+			{
+				frag1.resize((int)frag1.length() - c); frag2.resize((int)frag2.length() - c);
+				sp.rLen -= c;
+				if (bDebugMode) printf("find %d tailing gaps in the genome block\n", c);
+			}
+			score = AddNewCigarElements(frag1, frag2, cigar_vec); if (c > 0) cigar_vec.push_back(make_pair(c, 'S'));
+			//if (bDebugMode) printf("T2:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 		}
-		score = AddNewCigarElements(frag1, frag2, cigar_vec); if (c > 0) cigar_vec.push_back(make_pair(c, 'S'));
-		//if (bDebugMode) printf("T2:\n%s #read[%d-%d]=%d\n%s #chr[%lld-%lld]=%d\nScore=%d\n\n", frag1.c_str(), sp.rPos, sp.rPos + sp.rLen - 1, sp.rLen, frag2.c_str(), sp.gPos, sp.gPos + sp.gLen - 1, sp.gLen, score);
 	}
 	return score;
 }
