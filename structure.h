@@ -151,6 +151,7 @@ typedef struct
 	int rlen;
 	char* header;
 	char* seq;
+	char* qual;
 	uint8_t* EncodeSeq;
 	// aln report
 	int mapq;

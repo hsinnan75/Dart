@@ -59,7 +59,7 @@ ReadItem_t GetNextEntry(FILE *file)
 	ReadItem_t read;
 	char *buffer = NULL;
 
-	read.header = read.seq = NULL; read.rlen = 0;
+	read.header = read.seq = read.qual = NULL; read.rlen = 0;
 
 	if ((len = getline(&buffer, &size, file)) != -1)
 	{
@@ -71,8 +71,9 @@ ReadItem_t GetNextEntry(FILE *file)
 			{
 				read.seq = new char[read.rlen];
 				strncpy(read.seq, buffer, read.rlen);
-				read.rlen -= 1; read.seq[read.rlen] = '\0';
 				getline(&buffer, &size, file); getline(&buffer, &size, file);
+				read.qual = new char[read.rlen]; strncpy(read.qual, buffer, read.rlen);
+				read.rlen -= 1; read.seq[read.rlen] = '\0'; read.qual[read.rlen] = '\0';
 			}
 			else read.rlen = 0;
 		}
@@ -131,8 +132,12 @@ int GetNextChunk(bool bSepLibrary, FILE *file, FILE *file2, ReadItem_t* ReadArr)
 		{
 			rseq = new char[ReadArr[iCount].rlen];
 			GetComplementarySeq(ReadArr[iCount].rlen, ReadArr[iCount].seq, rseq);
-			copy(rseq, rseq + ReadArr[iCount].rlen, ReadArr[iCount].seq);
-			delete[] rseq;
+			copy(rseq, rseq + ReadArr[iCount].rlen, ReadArr[iCount].seq); delete[] rseq;
+			if (FastQFormat)
+			{
+				string rqual = ReadArr[iCount].qual; reverse(rqual.begin(), rqual.end());
+				copy(rqual.c_str(), rqual.c_str() + ReadArr[iCount].rlen, ReadArr[iCount].qual);
+			}
 		}
 		ReadArr[iCount].EncodeSeq = new uint8_t[ReadArr[iCount].rlen];
 		for (i = 0; i != ReadArr[iCount].rlen; i++)
@@ -152,7 +157,7 @@ ReadItem_t gzGetNextEntry(gzFile file)
 	ReadItem_t read;
 	char buffer[1024];
 
-	read.header = read.seq = NULL; read.rlen = 0;
+	read.header = read.seq = read.qual = NULL; read.rlen = 0;
 
 	if (gzgets(file, buffer, 1024) != NULL)
 	{
@@ -167,6 +172,8 @@ ReadItem_t gzGetNextEntry(gzFile file)
 			if (FastQFormat)
 			{
 				gzgets(file, buffer, 1024); gzgets(file, buffer, 1024);
+				read.qual = new char[read.rlen + 1]; read.qual[read.rlen] = '\0';
+				strncpy(read.qual, buffer, read.rlen);
 			}
 		}
 	}
@@ -192,8 +199,12 @@ int gzGetNextChunk(bool bSepLibrary, gzFile file, gzFile file2, ReadItem_t* Read
 		{
 			rseq = new char[ReadArr[iCount].rlen];
 			GetComplementarySeq(ReadArr[iCount].rlen, ReadArr[iCount].seq, rseq);
-			copy(rseq, rseq + ReadArr[iCount].rlen, ReadArr[iCount].seq);
-			delete[] rseq;
+			copy(rseq, rseq + ReadArr[iCount].rlen, ReadArr[iCount].seq); delete[] rseq;
+			if (FastQFormat)
+			{
+				string rqual = ReadArr[iCount].qual; reverse(rqual.begin(), rqual.end());
+				copy(rqual.c_str(), rqual.c_str() + ReadArr[iCount].rlen, ReadArr[iCount].qual);
+			}
 		}
 		ReadArr[iCount].EncodeSeq = new uint8_t[ReadArr[iCount].rlen];
 		for (i = 0; i != ReadArr[iCount].rlen; i++) ReadArr[iCount].EncodeSeq[i] = nst_nt4_table[(int)ReadArr[iCount].seq[i]];
