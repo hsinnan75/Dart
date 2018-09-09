@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.3.1: Add a "-v" option to show version of DART
+
 version 1.3.0: Fix a bug on reading input.
 
 version 1.2.9: Fix a bug in SAM output.

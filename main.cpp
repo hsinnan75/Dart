@@ -4,7 +4,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.3.0";
+const char* VersionStr = "1.3.1";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
@@ -24,6 +24,7 @@ void ShowProgramUsage(const char* program)
 	fprintf(stderr, "         -p            paired-end reads are interlaced in the same file\n");
 	fprintf(stderr, "         -unique       output unique alignments\n");
 	fprintf(stderr, "         -intron       the maximal intron size [500000]\n");
+	fprintf(stderr, "         -v			version\n");
 	fprintf(stderr, "\n");
 }
 
@@ -141,6 +142,11 @@ int main(int argc, char* argv[])
 				if ((MaxIntronSize = atoi(argv[++i])) < 100000) MaxIntronSize = 100000;
 			}
 			else if (parameter == "-d" || parameter == "-debug") bDebugMode = true;
+			else if (parameter == "-v" || parameter == "--version")
+			{
+				fprintf(stderr, "DART v%s\n\n", VersionStr);
+				exit(0);
+			}
 			else
 			{
 				fprintf(stderr, "Warning! Unknow parameter: %s\n", argv[i]);
