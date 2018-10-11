@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.3.2: Replaced 0 exit codes with 1 and the corresponding 'Warning' with 'Error' for cases where program termination is not the expected result (revised by Rad Suchecki).
+
 version 1.3.1: Add a "-v" option to show version of DART
 
 version 1.3.0: Fix a bug on reading input.
