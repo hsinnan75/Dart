@@ -24,7 +24,7 @@ void ShowProgramUsage(const char* program)
 	fprintf(stderr, "         -p            paired-end reads are interlaced in the same file\n");
 	fprintf(stderr, "         -unique       output unique alignments\n");
 	fprintf(stderr, "         -intron       the maximal intron size [500000]\n");
-	fprintf(stderr, "         -v			version\n");
+	fprintf(stderr, "         -v            version\n");
 	fprintf(stderr, "\n");
 }
 
