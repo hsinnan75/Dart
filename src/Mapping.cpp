@@ -631,8 +631,21 @@ void *ReadMapping(void *arg)
 
 		pthread_mutex_lock(&OutputLock);
 		iTotalReadNum += ReadNum; iUniqueMapping += myUniqueMapping; iUnMapping += myUnMapping; iPaired += myPairing;
-		if (OutputFileFormat == 0) for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++) fprintf(output, "%s", iter->c_str());
-		else for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)  gzwrite(gzOutput, iter->c_str(), iter->length());
+		if (OutputFileFormat == 0)
+		{
+			for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
+			{
+				fprintf(output, "%s", iter->c_str());
+				fflush(output);
+			}
+		}
+		else
+		{
+			for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
+			{
+				gzwrite(gzOutput, iter->c_str(), iter->length());
+			}
+		}
 		pthread_mutex_unlock(&OutputLock);
 
 		for (i = 0; i != ReadNum; i++)
