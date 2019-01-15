@@ -4,7 +4,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.3.1";
+const char* VersionStr = "1.3.3";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
@@ -24,7 +24,7 @@ void ShowProgramUsage(const char* program)
 	fprintf(stderr, "         -p            paired-end reads are interlaced in the same file\n");
 	fprintf(stderr, "         -unique       output unique alignments\n");
 	fprintf(stderr, "         -intron       the maximal intron size [500000]\n");
-	fprintf(stderr, "         -v			version\n");
+	fprintf(stderr, "         -v            version\n");
 	fprintf(stderr, "\n");
 }
 

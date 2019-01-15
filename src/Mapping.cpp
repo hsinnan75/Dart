@@ -468,7 +468,9 @@ void CheckPairedFinalAlignments(ReadItem_t& read1, ReadItem_t& read2)
 	int i, j, s;
 
 	//printf("BestIdx1=%d, BestIdx2=%d\n", read1.iBestAlnCanIdx + 1, read2.iBestAlnCanIdx + 1);
-	bMated = read1.AlnReportArr[read1.iBestAlnCanIdx].PairedAlnCanIdx == read2.iBestAlnCanIdx ? true : false;
+	if(read1.iBestAlnCanIdx != -1 && read2.iBestAlnCanIdx != -1) bMated = read1.AlnReportArr[read1.iBestAlnCanIdx].PairedAlnCanIdx == read2.iBestAlnCanIdx ? true : false;
+	else bMated = false;
+
 	if (!bMultiHit && bMated) return;
 	if (!bMated && read1.score > 0 && read2.score > 0) // identify mated pairs
 	{
@@ -629,8 +631,21 @@ void *ReadMapping(void *arg)
 
 		pthread_mutex_lock(&OutputLock);
 		iTotalReadNum += ReadNum; iUniqueMapping += myUniqueMapping; iUnMapping += myUnMapping; iPaired += myPairing;
-		if (OutputFileFormat == 0) for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++) fprintf(output, "%s", iter->c_str());
-		else for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)  gzwrite(gzOutput, iter->c_str(), iter->length());
+		if (OutputFileFormat == 0)
+		{
+			for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
+			{
+				fprintf(output, "%s", iter->c_str());
+				fflush(output);
+			}
+		}
+		else
+		{
+			for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
+			{
+				gzwrite(gzOutput, iter->c_str(), iter->length());
+			}
+		}
 		pthread_mutex_unlock(&OutputLock);
 
 		for (i = 0; i != ReadNum; i++)
