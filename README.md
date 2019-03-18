@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.3.4: Fix a bug on single-end mapping.
+
 version 1.3.3: Fix a bug on paired-end mapping.
 
 version 1.3.2: Replaced 0 exit codes with 1 and the corresponding 'Warning' with 'Error' for cases where program termination is not the expected result (revised by Rad Suchecki).

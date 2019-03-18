@@ -334,7 +334,13 @@ void OutputSingledAlignments(ReadItem_t& read, int& myUniqueMapping, int& myUnMa
 				{
 					rseq = new char[read.rlen + 1]; rseq[read.rlen] = '\0';
 					GetComplementarySeq(read.rlen, seq, rseq);
+					if (FastQFormat)
+					{
+						rqual = read.qual; reverse(rqual.begin(), rqual.end());
+					}
 				}
+				//if(strlen(read.qual) != read.rlen) len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t*\tNM:i:%d\tAS:i:%d\tXS:i:%d%s\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), read.rlen - read.score, read.score, read.sub_score, XS_A_Str[xs_a_idx]);
+				//else len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t%s\tNM:i:%d\tAS:i:%d\tXS:i:%d%s\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), (FastQFormat ? (read.AlnReportArr[i].coor.bDir ? read.qual : rqual.c_str()) : "*"), read.rlen - read.score, read.score, read.sub_score, XS_A_Str[xs_a_idx]);
 				len = sprintf(buffer, "%s\t%d\t%s\t%lld\t%d\t%s\t*\t0\t0\t%s\t%s\tNM:i:%d\tAS:i:%d\tXS:i:%d%s\n", read.header, read.AlnReportArr[i].iFrag, ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].name, read.AlnReportArr[i].coor.gPos, read.mapq, read.AlnReportArr[i].coor.CIGAR.c_str(), (read.AlnReportArr[i].coor.bDir ? seq : rseq), (FastQFormat ? (read.AlnReportArr[i].coor.bDir ? read.qual : rqual.c_str()) : "*"), read.rlen - read.score, read.score, read.sub_score, XS_A_Str[xs_a_idx]);
 				SamOutputVec.push_back(buffer);
 				//pthread_mutex_lock(&OutputLock);
