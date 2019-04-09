@@ -654,7 +654,7 @@ void *ReadMapping(void *arg)
 		{
 			for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
 			{
-				fprintf(sam_out, "%s\n", iter->c_str()); fflush(sam_out); fflush(sam_out);
+				fprintf(sam_out, "%s\n", iter->c_str()); fflush(sam_out); 
 			}
 		}
 		else
