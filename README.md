@@ -140,7 +140,7 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -p the input read file consists of interleaved paired-end sequences
 
--o STR alignment output, *.sam for SAM format, *.bam for BAM format
+-o STR alignment output [SAM/BAM]
 
 -j STR predicted splice junction filename [junctions.tab]
 
