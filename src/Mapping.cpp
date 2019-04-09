@@ -822,7 +822,7 @@ void Mapping()
 		fprintf(stdout, "\t# of unmapped reads = %lld (%.2f%%)\n", iUnMapping, (int)(10000 * (1.0*iUnMapping / iTotalReadNum) + 0.5) / 100.0);
 
 		i = OutputSpliceJunctions();
-		fprintf(stdout, "\t# of splice junctions = %d (file: %s)\n\n", i, SJFileName);
-		fprintf(stdout, "\tAlignment output: %s\n", OutputFileName);
+		fprintf(stdout, "\t# of splice junctions = %d (file: %s)\n", i, SJFileName);
+		fprintf(stdout, "\tAlignment output: %s\n\n", OutputFileName);
 	}
 }
