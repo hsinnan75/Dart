@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.3.5: Add BAM format output.
+
 version 1.3.4: Fix a bug on single-end mapping.
 
 version 1.3.3: Fix a bug on paired-end mapping.
@@ -98,14 +100,9 @@ To map short reads, DART requires the the index files of the reference genome an
  $ ./dart -i ecoli -f ReadFileA_1.fq ReadFileB_1.fq ReadFileC_1.fq -f2 ReadFileA_2.fq ReadFileB_2.fq ReadFileC_2.fq -o out.sam
   ```
 
- case 3: gzip compressed output
-  ```
- $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.sam.gz
-  ```
-
  case 3: bam output
   ```
- $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa | samtools view -bo out.bam
+ $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.bam
   ```
 
 The above commands are to run DART to align the paired-end reads in ReadFile1.fq and ReadFile2.fq with index files of ecoli.
@@ -125,8 +122,8 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 - Output files
 
-    Output is in standard SAM format. For reads aligned with reverse strand of reference genome, they are converted into obverse strand. More detailed information about SAM format, please refer to the SAMtools documents.
-    
+    Output is in standard SAM/BAM format. For reads aligned with reverse strand of reference genome, they are converted into obverse strand. More detailed information about SAM/BAM format, please refer to the SAMtools documents.
+
     We also output the predicted splice junctions (default: junctions.tab, or you may specify a filename with -j argument).
 
 # Parameter setting
@@ -143,7 +140,7 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -p the input read file consists of interleaved paired-end sequences
 
--o STR alignment output
+-o STR alignment output, *.sam for SAM format, *.bam for BAM format
 
 -j STR predicted splice junction filename [junctions.tab]
 

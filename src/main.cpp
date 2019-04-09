@@ -4,47 +4,47 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.3.4";
+const char* VersionStr = "1.3.5";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
-bool bDebugMode, bPairEnd, FastQFormat, bMultiHit, bUnique, gzCompressed;
+bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, gzCompressed;
 const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
 
 void ShowProgramUsage(const char* program)
 {
-	fprintf(stderr, "\nDART v%s (Hsin-Nan Lin & Wen-Lian Hsu)\n\n", VersionStr);
-	fprintf(stderr, "Usage: %s -i Index_Prefix -f <ReadFile_A1 ReadFile_B1 ...> [-f2 <ReadFile_A2 ReadFile_B2 ...>]\n\n", program);
-	fprintf(stderr, "Options: -t INT        number of threads [4]\n");
-	fprintf(stderr, "         -f            files with #1 mates reads\n");
-	fprintf(stderr, "         -f2           files with #2 mates reads\n");
-	fprintf(stderr, "         -o            alignment filename for output [stdout]\n");
-	fprintf(stderr, "         -j            splice junction output filename [junctions.tab]\n");
-	fprintf(stderr, "         -m            output multiple alignments\n");
-	fprintf(stderr, "         -p            paired-end reads are interlaced in the same file\n");
-	fprintf(stderr, "         -unique       output unique alignments\n");
-	fprintf(stderr, "         -intron       the maximal intron size [500000]\n");
-	fprintf(stderr, "         -v            version\n");
-	fprintf(stderr, "\n");
+	fprintf(stdout, "\nDART v%s (Hsin-Nan Lin & Wen-Lian Hsu)\n\n", VersionStr);
+	fprintf(stdout, "Usage: %s -i Index_Prefix -f <ReadFile_A1 ReadFile_B1 ...> [-f2 <ReadFile_A2 ReadFile_B2 ...>] -o Alignment_Output\n\n", program);
+	fprintf(stdout, "Options: -t INT        number of threads [4]\n");
+	fprintf(stdout, "         -f            files with #1 mates reads\n");
+	fprintf(stdout, "         -f2           files with #2 mates reads\n");
+	fprintf(stdout, "         -o            alignment filename for output [output.sam] fomrat: SAM|BAM\n");
+	fprintf(stdout, "         -j            splice junction output filename [junctions.tab]\n");
+	fprintf(stdout, "         -m            output multiple alignments\n");
+	fprintf(stdout, "         -p            paired-end reads are interlaced in the same file\n");
+	fprintf(stdout, "         -unique       output unique alignments\n");
+	fprintf(stdout, "         -intron       the maximal intron size [500000]\n");
+	fprintf(stdout, "         -v            version\n");
+	fprintf(stdout, "\n");
 }
 
 bool CheckOutputFileName()
 {
 	bool bRet = true;
 
-	if (OutputFileName != NULL)
+	if (strcmp(OutputFileName, "output.sam") != 0)
 	{
 		struct stat s;
 		string filename, FileExt;
 
 		filename = OutputFileName; FileExt = filename.substr(filename.find_last_of('.') + 1);
-		if (FileExt == "gz") OutputFileFormat = 1;
+		if (FileExt == "bam") OutputFileFormat = 1;
 		if (stat(OutputFileName, &s) == 0)
 		{
 			if (s.st_mode & S_IFDIR)
 			{
 				bRet = false;
-				fprintf(stderr, "Warning: %s is a directory!\n", OutputFileName);
+				fprintf(stdout, "Warning: %s is a directory!\n", OutputFileName);
 			}
 			else if (s.st_mode & S_IFREG)
 			{
@@ -52,7 +52,7 @@ bool CheckOutputFileName()
 			else
 			{
 				bRet = false;
-				fprintf(stderr, "Warning: %s is not a regular file!\n", OutputFileName);
+				fprintf(stdout, "Warning: %s is not a regular file!\n", OutputFileName);
 			}
 		}
 	}
@@ -94,12 +94,14 @@ int main(int argc, char* argv[])
 	bDebugMode = false;
 	bMultiHit = false;
 	bUnique = false;
+	bSilent = false;
 	MaxIntronSize = 500000;
+	OutputFileName = (char*)"output.sam";
 	OutputFileFormat = 0; // 0:sam 1:sam.gz
 	FastQFormat = true; // fastq:true, fasta:false
 
 	strcpy(SJFileName, "junctions.tab");
-	RefSequence = IndexFileName = OutputFileName = NULL;
+	RefSequence = IndexFileName = NULL;
 
 	if (argc == 1 || strcmp(argv[1], "-h") == 0) ShowProgramUsage(argv[0]);
 	else if (strcmp(argv[1], "update") == 0)
@@ -128,7 +130,7 @@ int main(int argc, char* argv[])
 			{
 				if ((iThreadNum = atoi(argv[++i])) > 16)
 				{
-					fprintf(stderr, "Warning! Thread number is limited to 16!\n");
+					fprintf(stdout, "Warning! Thread number is limited to 16!\n");
 					iThreadNum = 16;
 				}
 			}
@@ -144,7 +146,7 @@ int main(int argc, char* argv[])
 			else if (parameter == "-d" || parameter == "-debug") bDebugMode = true;
 			else if (parameter == "-v" || parameter == "--version")
 			{
-				fprintf(stderr, "DART v%s\n\n", VersionStr);
+				fprintf(stdout, "DART v%s\n\n", VersionStr);
 				exit(0);
 			}
 			else
