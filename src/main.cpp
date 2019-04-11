@@ -144,6 +144,7 @@ int main(int argc, char* argv[])
 				OutputFileFormat = 1;
 				OutputFileName = argv[++i];
 			}
+			else if (parameter == "-silent") bSilent = true;
 			else if (parameter == "-j") strcpy(SJFileName, argv[++i]);
 			else if (parameter == "-p") bPairEnd = true;
 			else if (parameter == "-m") bMultiHit = true;

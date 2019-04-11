@@ -595,7 +595,7 @@ void *ReadMapping(void *arg)
 		pthread_mutex_lock(&LibraryLock);
 		if (gzCompressed) ReadNum = gzGetNextChunk(bSepLibrary, gzReadFileHandler1, gzReadFileHandler2, ReadArr);
 		else ReadNum = GetNextChunk(bSepLibrary, ReadFileHandler1, ReadFileHandler2, ReadArr);
-		fprintf(stdout, "\r%lld %s tags have been processed in %lld seconds...", (long long)iTotalReadNum, (bPairEnd ? "paired-end" : "singled-end"), (long long)(time(NULL) - StartProcessTime)); fflush(stdout);
+		if (!bSilent) fprintf(stdout, "\r%lld %s tags have been processed in %lld seconds...", (long long)iTotalReadNum, (bPairEnd ? "paired-end" : "singled-end"), (long long)(time(NULL) - StartProcessTime)); fflush(stdout);
 		pthread_mutex_unlock(&LibraryLock);
 		
 		if (ReadNum == 0) break;
@@ -761,6 +761,8 @@ void Mapping()
 	}
 
 	StartProcessTime = time(NULL);
+	if (bSilent) fprintf(stdout, "Start read mapping...\n");
+
 	for (int LibraryID = 0; LibraryID < (int)ReadFileNameVec1.size(); LibraryID++)
 	{
 		gzReadFileHandler1 = gzReadFileHandler2 = NULL; ReadFileHandler1 = ReadFileHandler2 = NULL;
