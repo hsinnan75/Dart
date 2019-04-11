@@ -102,7 +102,7 @@ To map short reads, DART requires the the index files of the reference genome an
 
  case 3: bam output
   ```
- $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -o out.bam
+ $ ./dart -i ecoli -f ReadFile1.fa -f2 ReadFile2.fa -bo out.bam
   ```
 
 The above commands are to run DART to align the paired-end reads in ReadFile1.fq and ReadFile2.fq with index files of ecoli.
@@ -140,7 +140,9 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -p the input read file consists of interleaved paired-end sequences
 
--o STR alignment output [SAM/BAM]
+-o STR alignment output [SAM]
+
+-bo STR alignment output [BAM]
 
 -j STR predicted splice junction filename [junctions.tab]
 

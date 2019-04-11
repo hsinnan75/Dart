@@ -14,11 +14,12 @@ const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
 void ShowProgramUsage(const char* program)
 {
 	fprintf(stdout, "\nDART v%s (Hsin-Nan Lin & Wen-Lian Hsu)\n\n", VersionStr);
-	fprintf(stdout, "Usage: %s -i Index_Prefix -f <ReadFile_A1 ReadFile_B1 ...> [-f2 <ReadFile_A2 ReadFile_B2 ...>] -o Alignment_Output\n\n", program);
+	fprintf(stdout, "Usage: %s -i Index_Prefix -f <ReadFile_A1 ReadFile_B1 ...> [-f2 <ReadFile_A2 ReadFile_B2 ...>] -o|-bo Alignment_Output\n\n", program);
 	fprintf(stdout, "Options: -t INT        number of threads [4]\n");
 	fprintf(stdout, "         -f            files with #1 mates reads\n");
 	fprintf(stdout, "         -f2           files with #2 mates reads\n");
-	fprintf(stdout, "         -o            alignment filename for output [output.sam] fomrat: SAM|BAM\n");
+	fprintf(stdout, "         -o            alignment filename in SAM format\n");
+	fprintf(stdout, "         -bo           alignment filename in BAM format\n");
 	fprintf(stdout, "         -j            splice junction output filename [junctions.tab]\n");
 	fprintf(stdout, "         -m            output multiple alignments\n");
 	fprintf(stdout, "         -p            paired-end reads are interlaced in the same file\n");
@@ -35,10 +36,9 @@ bool CheckOutputFileName()
 	if (strcmp(OutputFileName, "output.sam") != 0)
 	{
 		struct stat s;
-		string filename, FileExt;
+		string filename;
 
-		filename = OutputFileName; FileExt = filename.substr(filename.find_last_of('.') + 1);
-		if (FileExt == "bam") OutputFileFormat = 1;
+		filename = OutputFileName;
 		if (stat(OutputFileName, &s) == 0)
 		{
 			if (s.st_mode & S_IFDIR)
@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 	bSilent = false;
 	MaxIntronSize = 500000;
 	OutputFileName = (char*)"output.sam";
-	OutputFileFormat = 0; // 0:sam 1:sam.gz
+	OutputFileFormat = 0; // 0:sam 1:bam
 	FastQFormat = true; // fastq:true, fasta:false
 
 	strcpy(SJFileName, "junctions.tab");
@@ -135,6 +135,11 @@ int main(int argc, char* argv[])
 				}
 			}
 			else if (parameter == "-o") OutputFileName = argv[++i];
+			else if (parameter == "-bo")
+			{
+				OutputFileFormat = 1;
+				OutputFileName = argv[++i];
+			}
 			else if (parameter == "-j") strcpy(SJFileName, argv[++i]);
 			else if (parameter == "-p") bPairEnd = true;
 			else if (parameter == "-m") bMultiHit = true;
