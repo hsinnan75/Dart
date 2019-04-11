@@ -134,7 +134,11 @@ int main(int argc, char* argv[])
 					iThreadNum = 16;
 				}
 			}
-			else if (parameter == "-o") OutputFileName = argv[++i];
+			else if (parameter == "-o")
+			{
+				OutputFileFormat = 0;
+				OutputFileName = argv[++i];
+			}
 			else if (parameter == "-bo")
 			{
 				OutputFileFormat = 1;
