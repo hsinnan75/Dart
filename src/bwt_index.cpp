@@ -151,12 +151,12 @@ bwaidx_t *bwa_idx_load(const char *hint)
 {
 	bwaidx_t *idx;
 
-	fprintf(stderr, "Load the genome index files...");
+	fprintf(stdout, "Load the genome index files...");
 	idx = (bwaidx_t*)calloc(1, sizeof(bwaidx_t));
 	idx->bwt = bwa_idx_load_bwt(hint);
 	idx->bns = bns_restore(hint);
 	idx->pac = (uint8_t*)calloc(idx->bns->l_pac/4+1, 1);
-	fprintf(stderr, "\n");
+	fprintf(stdout, "\n");
 
 	return idx;
 }
@@ -237,7 +237,7 @@ void RestoreReferenceInfo()
 	GenomeSize = RefIdx->bns->l_pac; TwoGenomeSize = (GenomeSize << 1);
 	iChromsomeNum = RefIdx->bns->n_seqs; ChromosomeVec.resize(iChromsomeNum);
 
-	fprintf(stderr, "Load the reference sequences...");
+	fprintf(stdout, "Load the reference sequences...\n");
 	fseek(RefIdx->bns->fp_pac, 0, SEEK_SET);
 	fread(RefIdx->pac, 1, GenomeSize / 4 + 1, RefIdx->bns->fp_pac);
 
@@ -254,8 +254,6 @@ void RestoreReferenceInfo()
 	}
 	RefSequence = new char[TwoGenomeSize + 1]; RefSequence[TwoGenomeSize] = '\0';
 	RestoreReferenceSequences();
-
-	fprintf(stderr, "\n");
 
 	//for (map<int64_t, int>::iterator iter = ChrLocMap.begin(); iter != ChrLocMap.end(); iter++)
 	//{
