@@ -16,6 +16,10 @@ Please use the command
   ```
 to download the package of DART.
 
+# Dependencies
+
+To compile Dart, it requires libboost-all-dev, libbz2-dev, and liblzma-dev installed in your system.
+
 # Changes
 version 1.3.6: Discard the thread limit.
 
