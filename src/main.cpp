@@ -4,7 +4,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.3.5";
+const char* VersionStr = "1.3.6";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
@@ -128,10 +128,10 @@ int main(int argc, char* argv[])
 			}
 			else if (parameter == "-t")
 			{
-				if ((iThreadNum = atoi(argv[++i])) > 16)
+				if ((iThreadNum = atoi(argv[++i])) <= 0)
 				{
-					fprintf(stdout, "Warning! Thread number is limited to 16!\n");
-					iThreadNum = 16;
+					fprintf(stdout, "Warning! Thread number should be a positive number!\n");
+					iThreadNum = 4;
 				}
 			}
 			else if (parameter == "-o")

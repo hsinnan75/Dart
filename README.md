@@ -17,6 +17,8 @@ Please use the command
 to download the package of DART.
 
 # Changes
+version 1.3.6: Discard the thread limit.
+
 version 1.3.5: Add BAM format output.
 
 version 1.3.4: Fix a bug on single-end mapping.
