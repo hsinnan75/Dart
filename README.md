@@ -20,39 +20,6 @@ to download the package of DART.
 
 To compile Dart, it requires libboost-all-dev, libbz2-dev, and liblzma-dev installed in your system.
 
-# Changes
-version 1.3.6: Discard the thread limit.
-
-version 1.3.5: Add BAM format output.
-
-version 1.3.4: Fix a bug on single-end mapping.
-
-version 1.3.3: Fix a bug on paired-end mapping.
-
-version 1.3.2: Replaced 0 exit codes with 1 and the corresponding 'Warning' with 'Error' for cases where program termination is not the expected result (revised by Rad Suchecki).
-
-version 1.3.1: Add a "-v" option to show version of DART.
-
-version 1.3.0: Fix a bug on reading input.
-
-version 1.2.9: Fix a bug in SAM output.
-
-version 1.2.8: Fix the alignment of segment pairs with poor sequence identity.
-
-version 1.2.7: Add an update command.
-
-version 1.2.6: Fix the alignment of segment pairs with multiple mismatches.
-
-version 1.2.5: Fix the alignment when DNA sequences are shown in lower case.
-
-version 1.2.4: Allow multiple read files as the input.
-
-version 1.2.3: fix the bug when read number exceeds 2^23.
-
-version 1.2.0: Add ksw2 and edlib alignment method to replace the Needleman-Wunsch algorithm.
-
-version 1.1.2: fix a bug in the alignment report.
-
 # Get updates
 
 We update DART from time to time, please check if new version is available by using the following commands.
@@ -159,3 +126,21 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 -unique output unique alignments
 
   ```
+# Changes
+- 1.3.6: Discard the thread limit.
+- 1.3.5: Add BAM format output.
+- 1.3.4: Fix a bug on single-end mapping.
+- 1.3.3: Fix a bug on paired-end mapping.
+- 1.3.2: Replaced 0 exit codes with 1 and the corresponding 'Warning' with 'Error' for cases where program termination is not the expected result (revised by Rad Suchecki).
+- 1.3.1: Add a "-v" option to show version of DART.
+- 1.3.0: Fix a bug on reading input.
+- 1.2.9: Fix a bug in SAM output.
+- 1.2.8: Fix the alignment of segment pairs with poor sequence identity.
+- 1.2.7: Add an update command.
+- 1.2.6: Fix the alignment of segment pairs with multiple mismatches.
+- 1.2.5: Fix the alignment when DNA sequences are shown in lower case.
+- 1.2.4: Allow multiple read files as the input.
+- 1.2.3: fix the bug when read number exceeds 2^23.
+- 1.2.0: Add ksw2 and edlib alignment method to replace the Needleman-Wunsch algorithm.
+- 1.1.2: fix a bug in the alignment report.
+
