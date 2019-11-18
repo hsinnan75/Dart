@@ -3,16 +3,16 @@
 all: main
 
 CXX		= g++
-FLAGS		= -I${PREFIX}/include -L${PREFIX}/lib -Wall -D NDEBUG -O3 -m64
-LIB		= -lz -lm -lpthread -lstdc++
+CFLAGS		= -I${PREFIX}/include -L${PREFIX}/lib -Wall -D NDEBUG -O3 -m64
+LDFLAGS		= -L${PREFIX}/lib -lz -lm -lpthread -lstdc++
 SOURCE		= main.cpp Mapping.cpp AlignmentCandidates.cpp GetData.cpp tools.cpp nw_alignment.cpp bwt_search.cpp bwt_index.cpp KmerAnalysis.cpp
 HEADER		= structure.h
 OBJECT		= $(SOURCE:%.cpp=%.o)
 
 main:		$(OBJECT)
-			$(CXX) $(FLAGS) $(OBJECT) -o dart $(LIB) htslib/libhts.a -lbz2 -llzma
+			$(CXX) $(CFLAGS) $(OBJECT) -o dart $(LDFLAGS) htslib/libhts.a -lbz2 -llzma
 
 %.o:		%.cpp $(HEADER)
-			$(CXX) $(FLAGS) -c $<
+			$(CXX) $(CFLAGS) -c $<
 clean:
 		rm -f *.o *~

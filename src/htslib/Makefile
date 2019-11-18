@@ -35,8 +35,7 @@ CPPFLAGS =
 #CFLAGS   = -g -Wall -O2 -pedantic -std=c99 -D_XOPEN_SOURCE=600 -D__FUNCTION__=__func__
 CFLAGS   = -g -Wall -O2
 EXTRA_CFLAGS_PIC = -fpic
-LDFLAGS  =
-LIBS     = $(htslib_default_libs)
+LDFLAGS  = $(htslib_default_libs)
 
 prefix      = /usr/local
 exec_prefix = $(prefix)
@@ -239,7 +238,7 @@ libhts.a: $(LIBHTS_OBJS)
 print-config:
 	@echo LDFLAGS = $(LDFLAGS)
 	@echo LIBHTS_OBJS = $(LIBHTS_OBJS)
-	@echo LIBS = $(LIBS)
+	@echo LIBS = $(LDFLAGS)
 	@echo PLATFORM = $(PLATFORM)
 
 # The target here is libhts.so, as that is the built file that other rules
