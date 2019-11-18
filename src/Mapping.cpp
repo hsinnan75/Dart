@@ -747,7 +747,7 @@ void Mapping()
 
 		for (i = 0; i < iChromsomeNum; i++)
 		{
-			len = sprintf(buffer, "@SQ\tSN:%s\tLN:%lld\n", ChromosomeVec[i].name, ChromosomeVec[i].len);
+			len = sprintf(buffer, "@SQ\tSN:%s\tLN:%lld\n", ChromosomeVec[i].name, (long long)ChromosomeVec[i].len);
 
 			if (OutputFileFormat == 0) fprintf(sam_out, "%s", buffer);
 			else kputsn(buffer, len, &str);
@@ -820,7 +820,7 @@ void Mapping()
 		else fprintf(stdout, "\t# of total mapped reads = %lld (sensitivity = %.2f%%)\n", (long long)(iTotalReadNum - iUnMapping), (int)(10000 * (1.0*(iTotalReadNum - iUnMapping) / iTotalReadNum) + 0.5) / 100.0);
 		fprintf(stdout, "\t# of unique mapped reads = %lld (%.2f%%)\n", (long long)iUniqueMapping, (int)(10000 * (1.0*iUniqueMapping / iTotalReadNum) + 0.5) / 100.0);
 		if (!bUnique) fprintf(stdout, "\t# of multiple mapped reads = %lld (%.2f%%)\n", (long long)(iTotalReadNum - iUnMapping - iUniqueMapping), (int)(10000 * (1.0*(iTotalReadNum - iUnMapping - iUniqueMapping) / iTotalReadNum) + 0.5) / 100.0);
-		fprintf(stdout, "\t# of unmapped reads = %lld (%.2f%%)\n", iUnMapping, (int)(10000 * (1.0*iUnMapping / iTotalReadNum) + 0.5) / 100.0);
+		fprintf(stdout, "\t# of unmapped reads = %lld (%.2f%%)\n", (long long)iUnMapping, (int)(10000 * (1.0*iUnMapping / iTotalReadNum) + 0.5) / 100.0);
 
 		i = OutputSpliceJunctions();
 		fprintf(stdout, "\t# of splice junctions = %d (file: %s)\n", i, SJFileName);

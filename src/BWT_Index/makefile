@@ -10,11 +10,11 @@ PROG=		bwt_index
 
 all:$(PROG)
 
-bwt_index:libbwa.a main.o
-		$(CC) $(FLAGS) main.o -o $@ -L. -lbwa $(LDFLAGS)
-
 libbwa.a:$(LOBJS)
 		$(AR) -csru $@ $(LOBJS)
+
+bwt_index:libbwa.a main.o
+		$(CC) $(FLAGS) main.o -o $@ -L. -lbwa $(LDFLAGS)
 
 clean:
 		rm -f *.o $(PROG) *~ *.a
