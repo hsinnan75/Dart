@@ -1,20 +1,20 @@
-CC=		gcc
-CFLAGS=		-I${PREFIX}/include -Wall -O3
-LDFLAGS=	-L${PREFIX}/lib -lm -lz
-AR=		ar
+CC=gcc
+FLAGS=		-I${PREFIX}/include -L${PREFIX}/lib -g -Wall -O3
+AR=ar
 LOBJS=		utils.o bwt.o bntseq.o QSufSort.o bwt_gen.o bwtindex.o
 PROG=		bwt_index
+LIBS=		-lm -lz
 
 .c.o:
-		$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $@
+		$(CC) -c $(FLAGS) $(INCLUDES) $< -o $@
 
 all:$(PROG)
 
+bwt_index:libbwa.a main.o
+		$(CC) $(FLAGS) main.o -o $@ -L. -lbwa $(LIBS)
+
 libbwa.a:$(LOBJS)
 		$(AR) -csru $@ $(LOBJS)
-
-bwt_index:libbwa.a main.o
-		$(CC) $(FLAGS) main.o -o $@ -L. -lbwa $(LDFLAGS)
 
 clean:
 		rm -f *.o $(PROG) *~ *.a
