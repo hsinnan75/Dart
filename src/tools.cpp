@@ -124,7 +124,7 @@ void ShowSeedLocationInfo(int64_t MyPos)
 	map<int64_t, int>::const_iterator iter = ChrLocMap.lower_bound(MyPos);
 	if (MyPos < GenomeSize) gPos = MyPos - ChromosomeVec[iter->second].FowardLocation;
 	else gPos = iter->first - MyPos;
-	printf("\t\t\t\t\tChr [%s, %lld]\n", ChromosomeVec[iter->second].name, gPos);
+	printf("\t\t\t\t\tChr [%s, %lld]\n", ChromosomeVec[iter->second].name, (long long)gPos);
 }
 
 void ShowSeedInfo(vector<SeedPair_t>& SeedPairVec)
@@ -133,7 +133,7 @@ void ShowSeedInfo(vector<SeedPair_t>& SeedPairVec)
 	{
 		if (iter->rLen > 0 || iter->gLen > 0)
 		{
-			printf("\t\tseed#%d: R[%d-%d]=%d G[%lld-%lld]=%d Diff=%lld %s\n", (int)(iter - SeedPairVec.begin() + 1), iter->rPos, iter->rPos + iter->rLen - 1, iter->rLen, iter->gPos, iter->gPos + iter->gLen - 1, iter->gLen, iter->PosDiff, (iter->bSimple ? "Simple" : "Normal"));
+			printf("\t\tseed#%d: R[%d-%d]=%d G[%lld-%lld]=%d Diff=%lld %s\n", (int)(iter - SeedPairVec.begin() + 1), iter->rPos, iter->rPos + iter->rLen - 1, iter->rLen, (long long)iter->gPos, (long long)(iter->gPos + iter->gLen - 1), iter->gLen, (long long)iter->PosDiff, (iter->bSimple ? "Simple" : "Normal"));
 			if(iter->gPos < GenomeSize) ShowSeedLocationInfo(iter->gPos);
 			else ShowSeedLocationInfo(iter->gPos + iter->gLen - 1);
 		}

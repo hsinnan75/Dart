@@ -44,13 +44,13 @@ string GenerateCIGAR(vector<pair<int, char> >& cigar_vec)
 	{
 		if (cigar_vec[i].second != state)
 		{
-			if (c > 0) sprintf(buf, "%d%c\0", c, state), cigar_str += buf;
+			if (c > 0) sprintf(buf, "%d%c", c, state), cigar_str += buf;
 
 			c = cigar_vec[i].first; state = cigar_vec[i].second;
 		}
 		else c += cigar_vec[i].first;
 	}
-	if (c > 0) sprintf(buf, "%d%c\0", c, state), cigar_str += buf;
+	if (c > 0) sprintf(buf, "%d%c", c, state), cigar_str += buf;
 
 	//if (bDebugMode) printf("CIGAR=%s\n\n\n", cigar_str.c_str());
 
@@ -63,7 +63,7 @@ void ShowSpliceJunctions(char* header, Coordinate_t& coor)
 	int64_t gPos = coor.gPos;
 	string tmp, CIGAR = coor.CIGAR;
 
-	printf("\nSplice junctions [%s]: %lld\n", header, coor.gPos);
+	printf("\nSplice junctions [%s]: %lld\n", header, (long long)coor.gPos);
 	while (CIGAR != "")
 	{
 		for (p = 0; p < (int)CIGAR.length(); p++) if (isalpha(CIGAR[p])) break;
@@ -101,7 +101,7 @@ Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, 
 		iter = ChrLocMap.lower_bound(gPos);
 		coor.ChromosomeIdx = iter->second;
 		coor.gPos = iter->first - end_gPos + 1;
-		if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, gPos, coor.gPos);
+		if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, (long long)ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, (long long)gPos, (long long)coor.gPos);
 	}
 	//if (coor.gPos < 0)
 	//{
@@ -308,7 +308,7 @@ void ShowFragmentPair(char* seq, SeedPair_t& SeedPair)
 	string frag1, frag2;
 	int64_t LeftGPos, RightGPos;
 
-	printf("r[%d-%d], g[%lld-%lld], Len=%d\n", SeedPair.rPos, SeedPair.rPos + SeedPair.rLen - 1, SeedPair.gPos, SeedPair.gPos + SeedPair.gLen - 1, SeedPair.rLen);
+	printf("r[%d-%d], g[%lld-%lld], Len=%d\n", SeedPair.rPos, SeedPair.rPos + SeedPair.rLen - 1, (long long)SeedPair.gPos, (long long)(SeedPair.gPos + SeedPair.gLen - 1), SeedPair.rLen);
 
 	LeftGPos = SeedPair.gPos - 50;
 	RightGPos = SeedPair.gPos + SeedPair.gLen + 50;

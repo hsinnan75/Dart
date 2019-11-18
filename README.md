@@ -142,5 +142,5 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 - 1.2.4: Allow multiple read files as the input.
 - 1.2.3: fix the bug when read number exceeds 2^23.
 - 1.2.0: Add ksw2 and edlib alignment method to replace the Needleman-Wunsch algorithm.
-- 1.1.2: fix a bug in the alignment report.
+- 1.2.2: fix a bug in the alignment report.
 
