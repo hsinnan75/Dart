@@ -10,7 +10,13 @@ DART adopts a divide-and-conquer strategy to handle RNA-Seq transcript alignment
 
 # Download
 
-Please use the command 
+## Conda
+Install [Bioconda](https://bioconda.github.io/user/install.html) then type:
+```
+$ conda install dart
+```
+
+## Github
   ```
   $ git clone https://github.com/hsinnan75/Dart.git
   ```

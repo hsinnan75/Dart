@@ -3,7 +3,7 @@
 all: dart bwt_index
 
 htslib:
-		mkdir -p bin
+		mkdir -p bin/
 		$(MAKE) -C src/htslib libhts.a
 
 dart: htslib
