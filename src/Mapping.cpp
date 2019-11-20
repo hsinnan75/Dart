@@ -13,9 +13,9 @@ samFile *bam_out = 0;
 time_t StartProcessTime;
 bool bSepLibrary = false;
 bam_hdr_t *header = NULL;
+pthread_mutex_t LibraryLock, OutputLock;
 FILE *ReadFileHandler1, *ReadFileHandler2;
 gzFile gzReadFileHandler1, gzReadFileHandler2;
-static pthread_mutex_t LibraryLock, OutputLock;
 const char* XS_A_Str[] = { "", " XS:A:+" , " XS:A:-" };
 map<pair<int64_t, int64_t>, SpliceJunction_t> SpliceJunctionMap;
 int64_t iTotalReadNum = 0, iUniqueMapping = 0, iUnMapping = 0, iPaired = 0;
@@ -758,9 +758,8 @@ void Mapping()
 			(void)sam_hdr_write(bam_out, header);
 		}
 	}
-
-	StartProcessTime = time(NULL);
-	if (bSilent) fprintf(stdout, "Start read mapping...\n");
+	pthread_mutex_init(&LibraryLock, NULL); pthread_mutex_init(&OutputLock, NULL);
+	StartProcessTime = time(NULL); if (bSilent) fprintf(stdout, "Start read mapping...\n");
 
 	for (int LibraryID = 0; LibraryID < (int)ReadFileNameVec1.size(); LibraryID++)
 	{

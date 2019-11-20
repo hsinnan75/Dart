@@ -133,6 +133,7 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
   ```
 # Changes
+- 1.3.7: Fix a bug when running with multi-threads on Mac PCs
 - 1.3.6: Discard the thread limit.
 - 1.3.5: Add BAM format output.
 - 1.3.4: Fix a bug on single-end mapping.
