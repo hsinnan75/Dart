@@ -60,11 +60,15 @@ To index a reference genome, DART requires the target genome file (in fasta form
   ```
   $ ./bwt_index ref_file[ex.ecoli.fa] index_prefix[ex. Ecoli]
   ```
+or
+  ```
+  $ ./dart index ref_file[ex.ecoli.fa] index_prefix[ex. Ecoli]
+  ```
 The above command is to index the genome file Ecoli.fa and store the index files begining with ecoli.
 
 Please note that if you find bwt_index does not work in your computer system, you may also use bwa (http://bio-bwa.sourceforge.net/) to build the index files.
   ```
-  $ ./bwa index -p index_prefix ref.fa
+  $ bwa index -p index_prefix ref.fa
   ```
 
 To map short reads, DART requires the the index files of the reference genome and at least one read file (two read files for the separated paired-end reads). Users should use -i to specify the prefix of the index files (including the directory path).
@@ -133,7 +137,8 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
   ```
 # Changes
-- 1.3.7: Fix a bug when running with multi-threads on Mac PCs
+- 1.3.8: Integrate bwt_index into dart.
+- 1.3.7: Fix a bug when running with multi-threads on Mac PCs.
 - 1.3.6: Discard the thread limit.
 - 1.3.5: Add BAM format output.
 - 1.3.4: Fix a bug on single-end mapping.

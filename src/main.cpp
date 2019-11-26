@@ -4,7 +4,7 @@
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.3.7";
+const char* VersionStr = "1.3.8";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
@@ -83,6 +83,11 @@ bool CheckInputFiles()
 	return bRet;
 }
 
+extern "C"
+{
+	int bwa_idx_build(const char *fa, const char *prefix);
+}
+
 int main(int argc, char* argv[])
 {
 	int i;
@@ -107,6 +112,15 @@ int main(int argc, char* argv[])
 	else if (strcmp(argv[1], "update") == 0)
 	{
 		system("git fetch; git merge origin/master master;make");
+		exit(0);
+	}
+	else if (strcmp(argv[1], "index") == 0)
+	{
+		if (argc == 4) bwa_idx_build(argv[2], argv[3]);
+		else
+		{
+			fprintf(stderr, "usage: %s index ref.fa prefix\n", argv[0]);
+		}
 		exit(0);
 	}
 	else
