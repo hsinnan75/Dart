@@ -608,7 +608,6 @@ void *ReadMapping(void *arg)
 
 				SeedPairVec2 = IdentifySeedPairs(ReadArr[j].rlen, ReadArr[j].EncodeSeq); //if (bDebugMode) ShowSeedInfo(SeedPairVec2);
 				AlignmentVec2 = GenerateAlignmentCandidate(ReadArr[j].rlen, SeedPairVec2);
-
 				//if (bDebugMode) ShowAlignmentCandidateInfo(true, ReadArr[i].header+1, AlignmentVec1), ShowAlignmentCandidateInfo(false, ReadArr[j].header+1, AlignmentVec2);
 				if (CheckPairedAlignmentCandidates(AlignmentVec1, AlignmentVec2)) RemoveUnMatedAlignmentCandidates(AlignmentVec1, AlignmentVec2);
 				RemoveRedundantCandidates(AlignmentVec1); RemoveRedundantCandidates(AlignmentVec2);

@@ -137,6 +137,7 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
   ```
 # Changes
+- 1.3.9: Fix a bug when the input data contains unexpected characters.
 - 1.3.8: Integrate bwt_index into dart.
 - 1.3.7: Fix a bug when running with multi-threads on Mac PCs.
 - 1.3.6: Discard the thread limit.
