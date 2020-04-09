@@ -1,6 +1,6 @@
 .KEEP_STAT:
 
-all: bwt_index dart
+all: htslib bwt_index dart
 
 htslib:
 		mkdir -p bin/
