@@ -7,6 +7,7 @@ htslib:
 		$(MAKE) -C src/htslib libhts.a
 
 bwt_index:
+		mkdir -p bin/
 		$(MAKE) -C src/BWT_Index && mv -f src/BWT_Index/$@ bin/
 
 dart: htslib bwt_index
