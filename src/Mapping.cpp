@@ -688,30 +688,37 @@ void *ReadMapping(void *arg)
 
 int AbsLoc2ChrLoc(int64_t& g1, int64_t& g2)
 {
-	int ChrIdx;
+	int ChrIdx = -1;
 	map<int64_t, int>::iterator iter;
 
-	iter = ChrLocMap.lower_bound(g1); ChrIdx = iter->second;
-	g1 = g1 + 1 - ChromosomeVec[ChrIdx].FowardLocation;
-	g2 = g2 + 1 - ChromosomeVec[ChrIdx].FowardLocation;
+	if ((iter = ChrLocMap.lower_bound(g1)) != ChrLocMap.end())
+	{
+		ChrIdx = iter->second;
+		g1 = g1 + 1 - ChromosomeVec[ChrIdx].FowardLocation;
+		g2 = g2 + 1 - ChromosomeVec[ChrIdx].FowardLocation;
+	}
 	return ChrIdx;
 }
 
 int OutputSpliceJunctions()
 {
-	int ChrIdx;
 	int64_t g1, g2;
+	int n = 0, ChrIdx;
 	FILE *SJFile = fopen(SJFileName, "w");
 
 	for (map<pair<int64_t, int64_t>, SpliceJunction_t>::iterator iter = SpliceJunctionMap.begin(); iter != SpliceJunctionMap.end(); iter++)
 	{
 		g1 = iter->first.first; g2 = iter->first.second;
-		ChrIdx = AbsLoc2ChrLoc(g1, g2); //SJtypeNum[iter->second.type]++;
-		fprintf(SJFile, "%s\t%lld\t%lld\t%d\n", ChromosomeVec[ChrIdx].name, (long long)g1, (long long)g2, iter->second.iCount);
+		ChrIdx = AbsLoc2ChrLoc(g1, g2);
+		if (ChrIdx != -1)
+		{
+			n++;
+			fprintf(SJFile, "%s\t%lld\t%lld\t%d\n", ChromosomeVec[ChrIdx].name, (long long)g1, (long long)g2, iter->second.iCount);
+		}
 	}
 	fclose(SJFile);
 
-	return (int)SpliceJunctionMap.size();
+	return n;
 }
 
 bool CheckReadFormat(const char* filename)
