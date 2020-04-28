@@ -179,7 +179,7 @@ extern map<int64_t, int> ChrLocMap, ExonMap;
 extern vector<string> ReadFileNameVec1, ReadFileNameVec2;
 extern char *RefSequence, *GenomeFileName, *IndexFileName, *OutputFileName;
 extern bool bDebugMode, bSilent, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bUnique, gzCompressed;
-
+extern unsigned int MaxDupNum;
 extern int iThreadNum, MaxIntronSize, OutputFileFormat;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
 

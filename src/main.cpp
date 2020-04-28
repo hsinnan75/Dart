@@ -9,11 +9,12 @@ extern "C"
 bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
-const char* VersionStr = "1.4.0";
+unsigned int MaxDupNum;
+const char* VersionStr = "1.4.1";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
-int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
 bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, gzCompressed;
+int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
 const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
 
 void ShowProgramUsage(const char* program)
@@ -23,6 +24,7 @@ void ShowProgramUsage(const char* program)
 	fprintf(stdout, "Options: -t INT        number of threads [4]\n");
 	fprintf(stdout, "         -f            files with #1 mates reads\n");
 	fprintf(stdout, "         -f2           files with #2 mates reads\n");
+	fprintf(stdout, "         -max_dup INT  maximal number of repetitive fragments (between 100-10000) [%d]\n", MaxDupNum);
 	fprintf(stdout, "         -o            alignment filename in SAM format\n");
 	fprintf(stdout, "         -bo           alignment filename in BAM format\n");
 	fprintf(stdout, "         -j            splice junction output filename [junctions.tab]\n");
@@ -94,6 +96,7 @@ int main(int argc, char* argv[])
 	string parameter, str;
 
 	MaxGaps = 5;
+	MaxDupNum = 100;
 	iThreadNum = 4;
 	bPairEnd = false;
 	bDebugMode = false;
@@ -157,6 +160,12 @@ int main(int argc, char* argv[])
 			{
 				OutputFileFormat = 1;
 				OutputFileName = argv[++i];
+			}
+			else if (parameter == "-max_dup" && i+1 < argc)
+			{
+				MaxDupNum = (unsigned int)atoi(argv[++i]);
+				if (MaxDupNum < 100) MaxDupNum = 100;
+				else if (MaxDupNum >= 10000) MaxDupNum = 10000;
 			}
 			else if (parameter == "-silent") bSilent = true;
 			else if (parameter == "-j") strcpy(SJFileName, argv[++i]);

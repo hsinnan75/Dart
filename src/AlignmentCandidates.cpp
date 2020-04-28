@@ -1022,7 +1022,6 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 	map<int64_t, int>::iterator iter, ExonMapIter;
 
 	if (bDebugMode) printf("\n\nGenerate alignment for read %s (%d cans)\n", read.header, (int)AlignmentVec.size()), fflush(stdout);
-	
 	read.score = read.iBestAlnCanIdx = 0;
 	if ((read.CanNum = (int)AlignmentVec.size()) > 0)
 	{

@@ -1,6 +1,5 @@
 #include "structure.h"
 
-#define OCC_Thr 100
 #define OCC_INTV_SHIFT 7
 #define OCC_INTERVAL   (1LL<<OCC_INTV_SHIFT)
 #define OCC_INTV_MASK  (OCC_INTERVAL - 1)
@@ -171,7 +170,7 @@ bwtSearchResult_t BWT_Search(uint8_t* seq, int start, int stop)
 	}
 	bwtSearchResult.LocArr = NULL;
 	//printf("MaxSeedLen=%d, freq=%d\n", pos - start, ik.x[2]);
-	if (ik.x[2] <= OCC_Thr && (bwtSearchResult.len = pos - start) >= 16)
+	if (ik.x[2] <= MaxDupNum && (bwtSearchResult.len = pos - start) >= 16)
 	{
 		bwtSearchResult.freq = (int)ik.x[2];
 		bwtSearchResult.LocArr = new bwtint_t[bwtSearchResult.freq];

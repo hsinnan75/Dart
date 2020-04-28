@@ -643,16 +643,15 @@ void *ReadMapping(void *arg)
 			}
 		}
 		myUniqueMapping = myUnMapping = myPairing = 0; SamOutputVec.clear();
-		if (bPairEnd && ReadNum %2 == 0) for (i = 0; i != ReadNum; i += 2) OutputPairedAlignments(ReadArr[i], ReadArr[i+1], myUniqueMapping, myUnMapping, myPairing, SamOutputVec);
+		if (bPairEnd && ReadNum % 2 == 0) for (i = 0; i != ReadNum; i += 2) OutputPairedAlignments(ReadArr[i], ReadArr[i+1], myUniqueMapping, myUnMapping, myPairing, SamOutputVec);
 		else for (i = 0; i != ReadNum; i++) OutputSingledAlignments(ReadArr[i], myUniqueMapping, myUnMapping, SamOutputVec);
-
 		pthread_mutex_lock(&OutputLock);
 		iTotalReadNum += ReadNum; iUniqueMapping += myUniqueMapping; iUnMapping += myUnMapping; iPaired += myPairing;
 		if (OutputFileFormat == 0)
 		{
 			for (vector<string>::iterator iter = SamOutputVec.begin(); iter != SamOutputVec.end(); iter++)
 			{
-				fprintf(sam_out, "%s\n", iter->c_str()); fflush(sam_out); 
+				fprintf(sam_out, "%s\n", iter->c_str()); //fflush(sam_out); 
 			}
 		}
 		else
@@ -667,7 +666,6 @@ void *ReadMapping(void *arg)
 			bam_destroy1(b);
 		}
 		pthread_mutex_unlock(&OutputLock);
-
 		for (i = 0; i != ReadNum; i++)
 		{
 			delete[] ReadArr[i].header;
@@ -736,37 +734,33 @@ void Mapping()
 	int i;
 	pthread_t *ThreadArr = new pthread_t[iThreadNum];
 
-	if (bDebugMode) iThreadNum = 1;
-	else
+	int len;
+	char buffer[1024];
+	kstring_t str = { 0, 0, NULL };
+
+	//printf("output file = %s\n", OutputFileName);
+	if (OutputFileFormat == 0) sam_out = fopen(OutputFileName, "w");
+	else bam_out = sam_open_format(OutputFileName, "wb", NULL);
+
+	len = sprintf(buffer, "@PG\tID:Dart\tPN:Dart\tVN:%s\n", VersionStr);
+	if (OutputFileFormat == 0) fprintf(sam_out, "%s", buffer);
+	else kputsn(buffer, len, &str);
+
+	for (i = 0; i < iChromsomeNum; i++)
 	{
-		int len;
-		char buffer[1024];
-		kstring_t str = { 0, 0, NULL };
-
-		if (OutputFileFormat == 0) sam_out = fopen(OutputFileName, "w");
-		else bam_out = sam_open_format(OutputFileName, "wb", NULL);
-
-		len = sprintf(buffer, "@PG\tID:Dart\tPN:Dart\tVN:%s\n", VersionStr);
+		len = sprintf(buffer, "@SQ\tSN:%s\tLN:%lld\n", ChromosomeVec[i].name, (long long)ChromosomeVec[i].len);
 
 		if (OutputFileFormat == 0) fprintf(sam_out, "%s", buffer);
 		else kputsn(buffer, len, &str);
-
-		for (i = 0; i < iChromsomeNum; i++)
-		{
-			len = sprintf(buffer, "@SQ\tSN:%s\tLN:%lld\n", ChromosomeVec[i].name, (long long)ChromosomeVec[i].len);
-
-			if (OutputFileFormat == 0) fprintf(sam_out, "%s", buffer);
-			else kputsn(buffer, len, &str);
-		}
-		if (OutputFileFormat == 1)
-		{
-			header = SamHdr2BamHdr(&str);
-			(void)sam_hdr_write(bam_out, header);
-		}
 	}
+	if (OutputFileFormat == 1)
+	{
+		header = SamHdr2BamHdr(&str);
+		(void)sam_hdr_write(bam_out, header);
+	}
+	if (bDebugMode) iThreadNum = 1;
 	pthread_mutex_init(&LibraryLock, NULL); pthread_mutex_init(&OutputLock, NULL);
 	StartProcessTime = time(NULL); if (bSilent) fprintf(stdout, "Start read mapping...\n");
-
 	for (int LibraryID = 0; LibraryID < (int)ReadFileNameVec1.size(); LibraryID++)
 	{
 		gzReadFileHandler1 = gzReadFileHandler2 = NULL; ReadFileHandler1 = ReadFileHandler2 = NULL;
@@ -801,7 +795,7 @@ void Mapping()
 
 		for (i = 0; i < iThreadNum; i++) pthread_create(&ThreadArr[i], NULL, ReadMapping, NULL);
 		for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
-
+		printf("All reads are done mapping\n");
 		if (gzCompressed)
 		{
 			if (gzReadFileHandler1 != NULL) gzclose(gzReadFileHandler1);
