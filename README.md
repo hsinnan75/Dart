@@ -123,6 +123,8 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -p the input read file consists of interleaved paired-end sequences
 
+-max_dup INT  maximal number of repetitive fragments (between 100-10000) [100]
+
 -o STR alignment output [SAM]
 
 -bo STR alignment output [BAM]
