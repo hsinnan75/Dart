@@ -133,7 +133,7 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -j STR predicted splice junction filename [junctions.tab]
 
--all_sj detect all splice junction regardless of mapq score [false]
+-all_sj detect all possible splice junctions regardless of mapq score [false]
 
 -m output multiple alignments [false]
 
