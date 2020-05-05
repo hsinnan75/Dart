@@ -620,8 +620,8 @@ void *ReadMapping(void *arg)
 				SetPairedAlignmentFlag(ReadArr[i], ReadArr[j]);
 				EvaluateMAPQ(ReadArr[i]); EvaluateMAPQ(ReadArr[j]);
 
-				if (ReadArr[i].mapq == Max_MAPQ || (bFindAllJunction && ReadArr[i].score > 0)) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
-				if (ReadArr[j].mapq == Max_MAPQ || (bFindAllJunction && ReadArr[i].score > 0)) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
+				if (ReadArr[i].mapq == Max_MAPQ || (bFindAllJunction && AlignmentVec1[ReadArr[i].iBestAlnCanIdx].SJtype != -1)) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
+				if (ReadArr[j].mapq == Max_MAPQ || (bFindAllJunction && AlignmentVec1[ReadArr[i].iBestAlnCanIdx].SJtype != -1)) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
 
 				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
@@ -795,7 +795,7 @@ void Mapping()
 
 		for (i = 0; i < iThreadNum; i++) pthread_create(&ThreadArr[i], NULL, ReadMapping, NULL);
 		for (i = 0; i < iThreadNum; i++) pthread_join(ThreadArr[i], NULL);
-		printf("All reads are done mapping\n");
+		//printf("All reads are done mapping\n");
 		if (gzCompressed)
 		{
 			if (gzReadFileHandler1 != NULL) gzclose(gzReadFileHandler1);
