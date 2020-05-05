@@ -123,6 +123,8 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -p the input read file consists of interleaved paired-end sequences
 
+-mis INT      maximal number of mismatches in an alignment
+
 -max_dup INT  maximal number of repetitive fragments (between 100-10000) [100]
 
 -o STR alignment output [SAM]
@@ -131,7 +133,9 @@ The above commands are to run DART to align the paired-end reads in ReadFile1.fq
 
 -j STR predicted splice junction filename [junctions.tab]
 
--m output multiple alignments
+-all_sj detect all splice junction regardless of mapq score [false]
+
+-m output multiple alignments [false]
 
 -intron INT the maximal intron size [500000]
 

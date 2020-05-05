@@ -10,11 +10,11 @@ bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
 unsigned int MaxDupNum;
-const char* VersionStr = "1.4.1";
+const char* VersionStr = "1.4.2";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
-bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, gzCompressed;
-int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, OutputFileFormat;
+bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, bFindAllJunction, gzCompressed;
+int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, MaxMismatch, OutputFileFormat;
 const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
 
 void ShowProgramUsage(const char* program)
@@ -24,11 +24,13 @@ void ShowProgramUsage(const char* program)
 	fprintf(stdout, "Options: -t INT        number of threads [4]\n");
 	fprintf(stdout, "         -f            files with #1 mates reads\n");
 	fprintf(stdout, "         -f2           files with #2 mates reads\n");
+	fprintf(stdout, "         -mis INT      maximal number of mismatches in an alignment\n");
 	fprintf(stdout, "         -max_dup INT  maximal number of repetitive fragments (between 100-10000) [%d]\n", MaxDupNum);
 	fprintf(stdout, "         -o            alignment filename in SAM format\n");
 	fprintf(stdout, "         -bo           alignment filename in BAM format\n");
 	fprintf(stdout, "         -j            splice junction output filename [junctions.tab]\n");
-	fprintf(stdout, "         -m            output multiple alignments\n");
+	fprintf(stdout, "         -m            output multiple alignments [false]\n");
+	fprintf(stdout, "         -all_sj       detect all splice junction regardless of mapq score [false]\n");
 	fprintf(stdout, "         -p            paired-end reads are interlaced in the same file\n");
 	fprintf(stdout, "         -unique       output unique alignments\n");
 	fprintf(stdout, "         -intron       the maximal intron size [500000]\n");
@@ -103,6 +105,7 @@ int main(int argc, char* argv[])
 	bMultiHit = false;
 	bUnique = false;
 	bSilent = false;
+	bFindAllJunction = false;
 	MaxIntronSize = 500000;
 	OutputFileName = (char*)"output.sam";
 	OutputFileFormat = 0; // 0:sam 1:bam
@@ -161,6 +164,10 @@ int main(int argc, char* argv[])
 				OutputFileFormat = 1;
 				OutputFileName = argv[++i];
 			}
+			else if (parameter == "-mis" && i + 1 < argc)
+			{
+				MaxMismatch = atoi(argv[++i]);
+			}
 			else if (parameter == "-max_dup" && i+1 < argc)
 			{
 				MaxDupNum = (unsigned int)atoi(argv[++i]);
@@ -172,6 +179,7 @@ int main(int argc, char* argv[])
 			else if (parameter == "-p") bPairEnd = true;
 			else if (parameter == "-m") bMultiHit = true;
 			else if (parameter == "-unique") bUnique = true;
+			else if (parameter == "-all_sj") bFindAllJunction = true;
 			else if (parameter == "-intron")
 			{
 				if ((MaxIntronSize = atoi(argv[++i])) < 100000) MaxIntronSize = 100000;

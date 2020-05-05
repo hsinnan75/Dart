@@ -1016,8 +1016,8 @@ void UpdateMyExonMap(map<int64_t, int>& MyExonMap, vector<SeedPair_t>& SeedPairV
 void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
 {
 	Coordinate_t coor;
-	int i, j, g, num;
 	map<int64_t, int> MyExonMap;
+	int i, j, g, num, score, mis;
 	vector<pair<int, char> > cigar_vec;
 	map<int64_t, int>::iterator iter, ExonMapIter;
 
@@ -1059,7 +1059,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 				//if (bDebugMode) printf("CheckCoordinateValidity fails!\n");
 				continue;
 			}
-			cigar_vec.clear();
+			cigar_vec.clear(); mis = 0;
 			for (j = 0; j != num; j++)
 			{
 				if (AlignmentVec[i].SeedVec[j].rLen == 0 && AlignmentVec[i].SeedVec[j].gLen == 0) continue;
@@ -1078,15 +1078,21 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 						//if (bDebugMode) printf("Check normal pair#%d: R[%d-%d]=%d G[%lld-%lld]=%d\n", j + 1, AlignmentVec[i].SeedVec[j].rPos, AlignmentVec[i].SeedVec[j].rPos + AlignmentVec[i].SeedVec[j].rLen - 1, AlignmentVec[i].SeedVec[j].rLen, AlignmentVec[i].SeedVec[j].gPos, AlignmentVec[i].SeedVec[j].gPos + AlignmentVec[i].SeedVec[j].gLen - 1, AlignmentVec[i].SeedVec[j].gLen), fflush(stdout);
 						if (j == 0)
 						{
-							read.AlnReportArr[i].AlnScore += ProcessHeadSequencePair(read.seq, AlignmentVec[i].SeedVec[0], cigar_vec);
+							score = ProcessHeadSequencePair(read.seq, AlignmentVec[i].SeedVec[0], cigar_vec);
+							read.AlnReportArr[i].AlnScore += score;
+							mis += (AlignmentVec[i].SeedVec[0].rLen - score);
 						}
 						else if (j == num - 1)
 						{
-							read.AlnReportArr[i].AlnScore += ProcessTailSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+							score = ProcessTailSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+							read.AlnReportArr[i].AlnScore += score;
+							mis += (AlignmentVec[i].SeedVec[j].rLen - score);
 						}
 						else
 						{
-							read.AlnReportArr[i].AlnScore += ProcessNormalSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+							score = ProcessNormalSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
+							read.AlnReportArr[i].AlnScore += score;
+							mis += (AlignmentVec[i].SeedVec[j].rLen - score);
 						}
 					}
 				}
@@ -1098,7 +1104,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if (cigar_vec.size() == 0 || (read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
+			if (mis > MaxMismatch || cigar_vec.size() == 0 || (read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
 
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
