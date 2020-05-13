@@ -77,41 +77,6 @@ void ShowSpliceJunctions(char* header, Coordinate_t& coor)
 	printf("\n\n");
 }
 
-//Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, vector<pair<int, char> >& cigar_vec)
-//{
-//	Coordinate_t coor;
-//	map<int64_t, int>::iterator iter;
-//
-//	if (gPos < GenomeSize) // forward strand
-//	{
-//		if (bFirstRead) coor.bDir = true;
-//		else coor.bDir = false;
-//
-//		iter = ChrLocMap.lower_bound(gPos);
-//		coor.ChromosomeIdx = iter->second;
-//		coor.gPos = gPos + 1 - ChromosomeVec[coor.ChromosomeIdx].FowardLocation;
-//	}
-//	else
-//	{
-//		if (bFirstRead) coor.bDir = false;
-//		else coor.bDir = true;
-//
-//		reverse(cigar_vec.begin(), cigar_vec.end());
-//
-//		iter = ChrLocMap.lower_bound(gPos);
-//		coor.ChromosomeIdx = iter->second;
-//		coor.gPos = iter->first - end_gPos + 1;
-//		if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, (long long)ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, (long long)gPos, (long long)coor.gPos);
-//	}
-//	//if (coor.gPos < 0)
-//	//{
-//	//	fprintf(stderr, "\ngPos: %lld --> %lld %s\n", gPos, coor.gPos, (coor.bDir ? "Forward" : "Reverse"));
-//	//}
-//	coor.CIGAR = GenerateCIGAR(cigar_vec);
-//
-//	return coor;
-//}
-
 Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos)
 {
 	Coordinate_t coor;
@@ -481,15 +446,18 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 			GappedExtension.p = i;
 		}
 	}
-	for (GappedExtension.right_ext = 0, p = GappedExtension.p, i = 0; p > 0; i++)
+	if (max_score < (int)(rGaps * 0.8) || rGaps - max_score > 5) GappedExtension.right_ext = GappedExtension.left_ext = 0;
 	{
-		if (frag1[i] != '-') p--;
-		if (frag2[i] != '-') GappedExtension.right_ext++;
-	}
-	for (GappedExtension.left_ext = 0, p = rGaps - GappedExtension.p, i = (int)frag3.length() - 1; p > 0; i--)
-	{
-		if (frag3[i] != '-') p--;
-		if (frag4[i] != '-') GappedExtension.left_ext++;
+		for (GappedExtension.right_ext = 0, p = GappedExtension.p, i = 0; p > 0; i++)
+		{
+			if (frag1[i] != '-') p--;
+			if (frag2[i] != '-') GappedExtension.right_ext++;
+		}
+		for (GappedExtension.left_ext = 0, p = rGaps - GappedExtension.p, i = (int)frag3.length() - 1; p > 0; i--)
+		{
+			if (frag3[i] != '-') p--;
+			if (frag4[i] != '-') GappedExtension.left_ext++;
+		}
 	}
 	return GappedExtension;
 }
