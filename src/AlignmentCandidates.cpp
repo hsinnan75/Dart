@@ -294,7 +294,7 @@ vector<AlignmentCandidate_t> GenerateAlignmentCandidate(int rlen, vector<SeedPai
 		for (j = i, k = i + 1; k < num; k++)
 		{
 			PosDiff = abs(SeedPairVec[k].PosDiff - SeedPairVec[j].PosDiff);
-			if (PosDiff < MaxGaps || (PosDiff < MaxIntronSize && SeedPairVec[k].rPos > SeedPairVec[j].rPos))
+			if (PosDiff < MaxGaps || (PosDiff < MaxIntronSize && PosDiff < ChromosomeVec[(ChrLocMap.lower_bound(SeedPairVec[j].gPos)->second)].len && SeedPairVec[k].rPos > SeedPairVec[j].rPos))
 			{
 				//if (bDebugMode) printf("add seed (PosDiff=%lld): r[%d-%d] g[%lld-%lld], len=%d, PosDiff=%lld\n", PosDiff, SeedPairVec[k].rPos, SeedPairVec[k].rPos + SeedPairVec[k].rLen - 1, SeedPairVec[k].gPos, SeedPairVec[k].gPos + SeedPairVec[k].gLen - 1, SeedPairVec[k].rLen, SeedPairVec[k].PosDiff);
 				AlignmentCandidate.Score += SeedPairVec[k].rLen;
