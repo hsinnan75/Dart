@@ -1019,6 +1019,7 @@ void UpdateMyExonMap(map<int64_t, int>& MyExonMap, vector<SeedPair_t>& SeedPairV
 
 void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
 {
+	bool bValidateAln;
 	Coordinate_t coor;
 	map<int64_t, int> MyExonMap;
 	int i, j, g, num, score, mis_num;
@@ -1032,6 +1033,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 		read.AlnReportArr = new AlignmentReport_t[read.CanNum];
 		for (i = 0; i != (int)AlignmentVec.size(); i++)
 		{
+			bValidateAln = true;
 			read.AlnReportArr[i].SJtype = -1;
 			read.AlnReportArr[i].AlnScore = 0;
 			read.AlnReportArr[i].PairedAlnCanIdx = AlignmentVec[i].PairedAlnCanIdx;
@@ -1069,8 +1071,15 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 				if (AlignmentVec[i].SeedVec[j].rLen == 0 && AlignmentVec[i].SeedVec[j].gLen == 0) continue;
 				else
 				{
-					if (j > 0 && (g = AlignmentVec[i].SeedVec[j].gPos - (AlignmentVec[i].SeedVec[j - 1].gPos + AlignmentVec[i].SeedVec[j - 1].gLen)) > 0) cigar_vec.push_back(make_pair(g, 'N'));
-
+					if (j > 0 && (g = AlignmentVec[i].SeedVec[j].gPos - (AlignmentVec[i].SeedVec[j - 1].gPos + AlignmentVec[i].SeedVec[j - 1].gLen)) > 0)
+					{
+						if (g < MinIntronSize)
+						{
+							bValidateAln = false;
+							break;
+						}
+						else cigar_vec.push_back(make_pair(g, 'N'));
+					}
 					if (AlignmentVec[i].SeedVec[j].bSimple)
 					{
 						//if (bDebugMode) ShowFragmentPair(AlignmentVec[i].SeedVec[j]);
@@ -1108,7 +1117,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if (mis_num > MaxMismatch || cigar_vec.size() == 0) read.AlnReportArr[i].AlnScore = 0;
+			if (bValidateAln == false || mis_num > MaxMismatch || cigar_vec.size() == 0) read.AlnReportArr[i].AlnScore = 0;
 			read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec.begin()->gPos, (AlignmentVec[i].SeedVec.rbegin()->gPos + AlignmentVec[i].SeedVec.rbegin()->gLen - 1));
 			if(read.AlnReportArr[i].coor.gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
 			else

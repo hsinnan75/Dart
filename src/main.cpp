@@ -10,11 +10,11 @@ bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
 unsigned int MaxDupNum;
-const char* VersionStr = "1.4.3";
+const char* VersionStr = "1.4.4";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, bFindAllJunction, gzCompressed;
-int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, MaxMismatch, OutputFileFormat;
+int iThreadNum, MaxInsertSize, MaxGaps, MaxIntronSize, MinIntronSize, MaxMismatch, OutputFileFormat;
 const char* SpliceJunctionArr[4] = { "GT/AG", "CT/AC", "GC/AG", "CT/GC" };
 
 void ShowProgramUsage(const char* program)
@@ -33,7 +33,8 @@ void ShowProgramUsage(const char* program)
 	fprintf(stdout, "         -all_sj       detect all splice junction regardless of mapq score [false]\n");
 	fprintf(stdout, "         -p            paired-end reads are interlaced in the same file\n");
 	fprintf(stdout, "         -unique       output unique alignments\n");
-	fprintf(stdout, "         -intron       the maximal intron size [500000]\n");
+	fprintf(stdout, "         -max_intron   the maximal intron size [500000]\n");
+	fprintf(stdout, "         -min_intron   the minimal intron size [10]\n");
 	fprintf(stdout, "         -v            version\n");
 	fprintf(stdout, "\n");
 }
@@ -107,6 +108,7 @@ int main(int argc, char* argv[])
 	bSilent = false;
 	bFindAllJunction = false;
 	MaxIntronSize = 500000;
+	MinIntronSize = 10;
 	OutputFileName = (char*)"output.sam";
 	OutputFileFormat = 0; // 0:sam 1:bam
 	FastQFormat = true; // fastq:true, fasta:false
@@ -180,9 +182,13 @@ int main(int argc, char* argv[])
 			else if (parameter == "-m") bMultiHit = true;
 			else if (parameter == "-unique") bUnique = true;
 			else if (parameter == "-all_sj") bFindAllJunction = true;
-			else if (parameter == "-intron")
+			else if (parameter == "-max_intron")
 			{
 				if ((MaxIntronSize = atoi(argv[++i])) < 100000) MaxIntronSize = 100000;
+			}
+			else if (parameter == "-min_intron")
+			{
+				if ((MinIntronSize = atoi(argv[++i])) > 10000) MinIntronSize = 1000;
 			}
 			else if (parameter == "-d" || parameter == "-debug") bDebugMode = true;
 			else if (parameter == "-v" || parameter == "--version")

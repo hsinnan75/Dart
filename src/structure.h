@@ -181,7 +181,7 @@ extern vector<string> ReadFileNameVec1, ReadFileNameVec2;
 extern char *RefSequence, *GenomeFileName, *IndexFileName, *OutputFileName;
 extern bool bDebugMode, bSilent, bPairEnd, bPacBioData, FastQFormat, bMultiHit, bFindAllJunction, bUnique, gzCompressed;
 extern unsigned int MaxDupNum;
-extern int iThreadNum, MaxIntronSize, MaxMismatch, OutputFileFormat;
+extern int iThreadNum, MaxIntronSize, MinIntronSize, MaxMismatch, OutputFileFormat;
 extern int iChromsomeNum, WholeChromosomeNum, ChromosomeNumMinusOne, MaxGaps;
 
 // bwt_index.cpp
