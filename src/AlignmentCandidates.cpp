@@ -1022,7 +1022,6 @@ void UpdateMyExonMap(map<int64_t, int>& MyExonMap, vector<SeedPair_t>& SeedPairV
 
 void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
 {
-	bool bValidateAln;
 	Coordinate_t coor;
 	map<int64_t, int> MyExonMap;
 	int i, j, g, num, score, mis_num;
@@ -1036,7 +1035,6 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 		read.AlnReportArr = new AlignmentReport_t[read.CanNum];
 		for (i = 0; i != (int)AlignmentVec.size(); i++)
 		{
-			bValidateAln = true;
 			read.AlnReportArr[i].SJtype = -1;
 			read.AlnReportArr[i].AlnScore = 0;
 			read.AlnReportArr[i].PairedAlnCanIdx = AlignmentVec[i].PairedAlnCanIdx;
@@ -1076,8 +1074,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 				{
 					if (j > 0 && (g = AlignmentVec[i].SeedVec[j].gPos - (AlignmentVec[i].SeedVec[j - 1].gPos + AlignmentVec[i].SeedVec[j - 1].gLen)) > 0)
 					{
-						if (g < MinIntronSize) bValidateAln = false;
-						else cigar_vec.push_back(make_pair(g, 'N'));
+						cigar_vec.push_back(make_pair(g, 'N'));
 					}
 					if (AlignmentVec[i].SeedVec[j].bSimple)
 					{
