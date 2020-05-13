@@ -44,8 +44,11 @@ string GenerateCIGAR(vector<pair<int, char> >& cigar_vec)
 	{
 		if (cigar_vec[i].second != state)
 		{
-			if (c > 0) sprintf(buf, "%d%c", c, state), cigar_str += buf;
-
+			if (c > 0)
+			{
+				if (state == 'N' && c < MinIntronSize) return "";
+				sprintf(buf, "%d%c", c, state), cigar_str += buf;
+			}
 			c = cigar_vec[i].first; state = cigar_vec[i].second;
 		}
 		else c += cigar_vec[i].first;
@@ -1073,11 +1076,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 				{
 					if (j > 0 && (g = AlignmentVec[i].SeedVec[j].gPos - (AlignmentVec[i].SeedVec[j - 1].gPos + AlignmentVec[i].SeedVec[j - 1].gLen)) > 0)
 					{
-						if (g < MinIntronSize)
-						{
-							bValidateAln = false;
-							break;
-						}
+						if (g < MinIntronSize) bValidateAln = false;
 						else cigar_vec.push_back(make_pair(g, 'N'));
 					}
 					if (AlignmentVec[i].SeedVec[j].bSimple)
@@ -1117,13 +1116,14 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if (bValidateAln == false || mis_num > MaxMismatch || cigar_vec.size() == 0) read.AlnReportArr[i].AlnScore = 0;
+			if (mis_num > MaxMismatch || cigar_vec.size() == 0) read.AlnReportArr[i].AlnScore = 0;
 			read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec.begin()->gPos, (AlignmentVec[i].SeedVec.rbegin()->gPos + AlignmentVec[i].SeedVec.rbegin()->gLen - 1));
 			if(read.AlnReportArr[i].coor.gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
 			else
 			{
 				if(AlignmentVec[i].SeedVec.begin()->gPos >= GenomeSize) reverse(cigar_vec.begin(), cigar_vec.end());
 				read.AlnReportArr[i].coor.CIGAR = GenerateCIGAR(cigar_vec);
+				if (read.AlnReportArr[i].coor.CIGAR == "") read.AlnReportArr[i].AlnScore = 0;
 			}
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
