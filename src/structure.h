@@ -157,6 +157,7 @@ typedef struct
 	int mapq;
 	int score;
 	int sub_score;
+	int mis_num;
 	int CanNum;
 	int iBestAlnCanIdx;
 	AlignmentReport_t* AlnReportArr;

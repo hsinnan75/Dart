@@ -212,9 +212,7 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 	char* buffer = NULL;
 	int i, j, xs_a_idx, dist = 0;
 
-	if (read1.rlen < 1000) buffer = (char*)malloc((10000));
-	else buffer = (char*)malloc((read1.rlen * 10));
-
+	buffer = (char*)malloc((read1.rlen * 10));
 	if (read1.score == 0)
 	{
 		myUnMapping++;
@@ -269,9 +267,7 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 	}
 	free(buffer);
 
-	if (read2.rlen < 1000) buffer = (char*)malloc((10000));
-	else buffer = (char*)malloc((read2.rlen * 10));
-
+	buffer = (char*)malloc((read2.rlen * 10));
 	if (read2.score == 0)
 	{
 		myUnMapping++;
@@ -622,7 +618,6 @@ void *ReadMapping(void *arg)
 
 				if (ReadArr[i].mapq == Max_MAPQ || (bFindAllJunction && AlignmentVec1[ReadArr[i].iBestAlnCanIdx].SJtype != -1)) UpdateLocalSJMap(AlignmentVec1[ReadArr[i].iBestAlnCanIdx], LocalSJMap);
 				if (ReadArr[j].mapq == Max_MAPQ || (bFindAllJunction && AlignmentVec1[ReadArr[j].iBestAlnCanIdx].SJtype != -1)) UpdateLocalSJMap(AlignmentVec2[ReadArr[j].iBestAlnCanIdx], LocalSJMap);
-
 				//if (bDebugMode) printf("\nEnd of mapping for read#%s\n%s\n", ReadArr[i].header, string().assign(100, '=').c_str());
 			}
 		}

@@ -77,7 +77,42 @@ void ShowSpliceJunctions(char* header, Coordinate_t& coor)
 	printf("\n\n");
 }
 
-Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, vector<pair<int, char> >& cigar_vec)
+//Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, vector<pair<int, char> >& cigar_vec)
+//{
+//	Coordinate_t coor;
+//	map<int64_t, int>::iterator iter;
+//
+//	if (gPos < GenomeSize) // forward strand
+//	{
+//		if (bFirstRead) coor.bDir = true;
+//		else coor.bDir = false;
+//
+//		iter = ChrLocMap.lower_bound(gPos);
+//		coor.ChromosomeIdx = iter->second;
+//		coor.gPos = gPos + 1 - ChromosomeVec[coor.ChromosomeIdx].FowardLocation;
+//	}
+//	else
+//	{
+//		if (bFirstRead) coor.bDir = false;
+//		else coor.bDir = true;
+//
+//		reverse(cigar_vec.begin(), cigar_vec.end());
+//
+//		iter = ChrLocMap.lower_bound(gPos);
+//		coor.ChromosomeIdx = iter->second;
+//		coor.gPos = iter->first - end_gPos + 1;
+//		if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, (long long)ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, (long long)gPos, (long long)coor.gPos);
+//	}
+//	//if (coor.gPos < 0)
+//	//{
+//	//	fprintf(stderr, "\ngPos: %lld --> %lld %s\n", gPos, coor.gPos, (coor.bDir ? "Forward" : "Reverse"));
+//	//}
+//	coor.CIGAR = GenerateCIGAR(cigar_vec);
+//
+//	return coor;
+//}
+
+Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos)
 {
 	Coordinate_t coor;
 	map<int64_t, int>::iterator iter;
@@ -96,18 +131,18 @@ Coordinate_t GenCoordinateInfo(bool bFirstRead, int64_t gPos, int64_t end_gPos, 
 		if (bFirstRead) coor.bDir = false;
 		else coor.bDir = true;
 
-		reverse(cigar_vec.begin(), cigar_vec.end());
+		//reverse(cigar_vec.begin(), cigar_vec.end());
 
 		iter = ChrLocMap.lower_bound(gPos);
 		coor.ChromosomeIdx = iter->second;
 		coor.gPos = iter->first - end_gPos + 1;
-		if(bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, (long long)ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, (long long)gPos, (long long)coor.gPos);
+		if (bDebugMode) printf("matched chr=%s, loc=%lld, gPos: %lld -> %lld\n", ChromosomeVec[coor.ChromosomeIdx].name, (long long)ChromosomeVec[coor.ChromosomeIdx].ReverseLocation, (long long)gPos, (long long)coor.gPos);
 	}
 	//if (coor.gPos < 0)
 	//{
 	//	fprintf(stderr, "\ngPos: %lld --> %lld %s\n", gPos, coor.gPos, (coor.bDir ? "Forward" : "Reverse"));
 	//}
-	coor.CIGAR = GenerateCIGAR(cigar_vec);
+	//coor.CIGAR = GenerateCIGAR(cigar_vec);
 
 	return coor;
 }
@@ -1017,7 +1052,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 {
 	Coordinate_t coor;
 	map<int64_t, int> MyExonMap;
-	int i, j, g, num, score, mis;
+	int i, j, g, num, score, mis_num;
 	vector<pair<int, char> > cigar_vec;
 	map<int64_t, int>::iterator iter, ExonMapIter;
 
@@ -1059,7 +1094,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 				//if (bDebugMode) printf("CheckCoordinateValidity fails!\n");
 				continue;
 			}
-			cigar_vec.clear(); mis = 0;
+			cigar_vec.clear(); mis_num = 0;
 			for (j = 0; j != num; j++)
 			{
 				if (AlignmentVec[i].SeedVec[j].rLen == 0 && AlignmentVec[i].SeedVec[j].gLen == 0) continue;
@@ -1080,35 +1115,42 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 						{
 							score = ProcessHeadSequencePair(read.seq, AlignmentVec[i].SeedVec[0], cigar_vec);
 							read.AlnReportArr[i].AlnScore += score;
-							mis += (AlignmentVec[i].SeedVec[0].rLen - score);
+							mis_num += (AlignmentVec[i].SeedVec[0].rLen - score);
 						}
 						else if (j == num - 1)
 						{
 							score = ProcessTailSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
 							read.AlnReportArr[i].AlnScore += score;
-							mis += (AlignmentVec[i].SeedVec[j].rLen - score);
+							mis_num += (AlignmentVec[i].SeedVec[j].rLen - score);
 						}
 						else
 						{
 							score = ProcessNormalSequencePair(read.seq, AlignmentVec[i].SeedVec[j], cigar_vec);
 							read.AlnReportArr[i].AlnScore += score;
-							mis += (AlignmentVec[i].SeedVec[j].rLen - score);
+							mis_num += (AlignmentVec[i].SeedVec[j].rLen - score);
 						}
 					}
 				}
 			}
 			if (num > 0)
 			{
-				if ((j = AlignmentVec[i].SeedVec[0].rPos) > 0) cigar_vec.insert(cigar_vec.begin(), make_pair(j, 'S'));
-				if ((j = read.rlen - (AlignmentVec[i].SeedVec[num - 1].rPos + AlignmentVec[i].SeedVec[num - 1].rLen)) > 0) cigar_vec.push_back(make_pair(j, 'S'));
+				if ((j = AlignmentVec[i].SeedVec.begin()->rPos) > 0) cigar_vec.insert(cigar_vec.begin(), make_pair(j, 'S'));
+				if ((j = read.rlen - (AlignmentVec[i].SeedVec.rbegin()->rPos + AlignmentVec[i].SeedVec.rbegin()->rLen)) > 0) cigar_vec.push_back(make_pair(j, 'S'));
 			}
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
-			if (mis > MaxMismatch || cigar_vec.size() == 0 || (read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec[0].gPos, (AlignmentVec[i].SeedVec[num - 1].gPos + AlignmentVec[i].SeedVec[num - 1].gLen - 1), cigar_vec)).gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
-
+			if (mis_num > MaxMismatch || cigar_vec.size() == 0) read.AlnReportArr[i].AlnScore = 0;
+			read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec.begin()->gPos, (AlignmentVec[i].SeedVec.rbegin()->gPos + AlignmentVec[i].SeedVec.rbegin()->gLen - 1));
+			if(read.AlnReportArr[i].coor.gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
+			else
+			{
+				if(AlignmentVec[i].SeedVec.begin()->gPos >= GenomeSize) reverse(cigar_vec.begin(), cigar_vec.end());
+				read.AlnReportArr[i].coor.CIGAR = GenerateCIGAR(cigar_vec);
+			}
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{
 				read.iBestAlnCanIdx = i;
+				read.mis_num = mis_num;
 				read.sub_score = read.score;
 				read.score = read.AlnReportArr[i].AlnScore;
 			}
