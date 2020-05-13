@@ -46,7 +46,7 @@ string GenerateCIGAR(vector<pair<int, char> >& cigar_vec)
 		{
 			if (c > 0)
 			{
-				if (state == 'N' && c < MinIntronSize) return "";
+				//if (state == 'N' && c < MinIntronSize) return "";
 				sprintf(buf, "%d%c", c, state), cigar_str += buf;
 			}
 			c = cigar_vec[i].first; state = cigar_vec[i].second;
@@ -1120,7 +1120,7 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			{
 				if(AlignmentVec[i].SeedVec.begin()->gPos >= GenomeSize) reverse(cigar_vec.begin(), cigar_vec.end());
 				read.AlnReportArr[i].coor.CIGAR = GenerateCIGAR(cigar_vec);
-				if (read.AlnReportArr[i].coor.CIGAR == "") read.AlnReportArr[i].AlnScore = 0;
+				//if (read.AlnReportArr[i].coor.CIGAR == "") read.AlnReportArr[i].AlnScore = 0;
 			}
 			if (read.AlnReportArr[i].AlnScore > read.score)
 			{

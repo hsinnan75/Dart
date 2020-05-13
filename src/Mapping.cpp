@@ -552,7 +552,8 @@ void UpdateLocalSJMap(AlignmentCandidate_t& Aln, map<pair<int64_t, int64_t>, Spl
 				g1 = TwoGenomeSize - Aln.SeedVec[i].gPos;
 				g2 = TwoGenomeSize - 1 - (Aln.SeedVec[i - 1].gPos + Aln.SeedVec[i - 1].gLen);
 			}
-			if ((iter = LocalSJMap.find(make_pair(g1, g2))) != LocalSJMap.end()) iter->second.iCount++;
+			if (abs(g2 - g1) < MinIntronSize) continue;
+			else if ((iter = LocalSJMap.find(make_pair(g1, g2))) != LocalSJMap.end()) iter->second.iCount++;
 			else
 			{
 				SpliceJunction.iCount = 1;
