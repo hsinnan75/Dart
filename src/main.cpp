@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 			}
 			else if (parameter == "-min_intron")
 			{
-				if ((MinIntronSize = atoi(argv[++i])) > 10000) MinIntronSize = 1000;
+				if ((MinIntronSize = atoi(argv[++i])) > 1000) MinIntronSize = 1000;
 			}
 			else if (parameter == "-d" || parameter == "-debug") bDebugMode = true;
 			else if (parameter == "-v" || parameter == "--version")
