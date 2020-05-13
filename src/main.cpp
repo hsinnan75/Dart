@@ -10,7 +10,7 @@ bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
 unsigned int MaxDupNum;
-const char* VersionStr = "1.4.2";
+const char* VersionStr = "1.4.3";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, bFindAllJunction, gzCompressed;
