@@ -447,6 +447,7 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 		}
 	}
 	if (max_score < (int)(rGaps * 0.8) || rGaps - max_score > 5) GappedExtension.right_ext = GappedExtension.left_ext = 0;
+	else
 	{
 		for (GappedExtension.right_ext = 0, p = GappedExtension.p, i = 0; p > 0; i++)
 		{
