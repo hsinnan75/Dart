@@ -10,7 +10,7 @@ bwt_t *Refbwt;
 bwaidx_t *RefIdx;
 char SJFileName[256];
 unsigned int MaxDupNum;
-const char* VersionStr = "1.4.4";
+const char* VersionStr = "1.4.5";
 vector<string> ReadFileNameVec1, ReadFileNameVec2;
 char *RefSequence, *IndexFileName, *OutputFileName;
 bool bDebugMode, bSilent, bPairEnd, FastQFormat, bMultiHit, bUnique, bFindAllJunction, gzCompressed;
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 	bSilent = false;
 	bFindAllJunction = false;
 	MaxIntronSize = 500000;
-	MinIntronSize = 10;
+	MinIntronSize = 5;
 	OutputFileName = (char*)"output.sam";
 	OutputFileFormat = 0; // 0:sam 1:bam
 	FastQFormat = true; // fastq:true, fasta:false
@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
 			}
 			else if (parameter == "-min_intron")
 			{
-				if ((MinIntronSize = atoi(argv[++i])) > 1000) MinIntronSize = 1000;
+				MinIntronSize = atoi(argv[++i]);
 			}
 			else if (parameter == "-d" || parameter == "-debug") bDebugMode = true;
 			else if (parameter == "-v" || parameter == "--version")

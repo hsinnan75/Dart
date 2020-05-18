@@ -1,6 +1,6 @@
 #include "structure.h"
 
-#define MinIntronSize 5
+//#define MinIntronSize 5
 
 map<int64_t, int> ExonMap;
 int ShiftArr[19] = { 0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9 };
@@ -1020,6 +1020,33 @@ void UpdateMyExonMap(map<int64_t, int>& MyExonMap, vector<SeedPair_t>& SeedPairV
 	}
 }
 
+bool CheckMinIntronSize(vector<pair<int, char> >& cigar_vec)
+{
+	bool bRet = true;
+	for (vector<pair<int, char> >::iterator iter = cigar_vec.begin(); iter != cigar_vec.end(); iter++)
+	{
+		if (iter->second == 'N' && iter->first < MinIntronSize)
+		{
+			bRet = false;
+			break;
+		}
+	}
+	return bRet;
+}
+
+//bool CheckSpliceJunctionExistence(vector<pair<int, char> >& cigar_vec)
+//{
+//	bool bRet = false;
+//	for (vector<pair<int, char> >::iterator iter = cigar_vec.begin(); iter != cigar_vec.end(); iter++)
+//	{
+//		if (iter->second == 'N')
+//		{
+//			bRet = true;
+//		}
+//	}
+//	return bRet;
+//}
+
 void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandidate_t>& AlignmentVec)
 {
 	Coordinate_t coor;
@@ -1114,25 +1141,30 @@ void GenMappingReport(bool bFirstRead, ReadItem_t& read, vector<AlignmentCandida
 			//if (bDebugMode) printf("Alignment score = %d (rlen=%d) \n", read.AlnReportArr[i].AlnScore, read.rlen);
 
 			if (mis_num > MaxMismatch || cigar_vec.size() == 0) read.AlnReportArr[i].AlnScore = 0;
-			read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec.begin()->gPos, (AlignmentVec[i].SeedVec.rbegin()->gPos + AlignmentVec[i].SeedVec.rbegin()->gLen - 1));
-			if(read.AlnReportArr[i].coor.gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
-			else
+			if (CheckMinIntronSize(cigar_vec) == false) read.AlnReportArr[i].AlnScore = 0;
+			
+			if (read.AlnReportArr[i].AlnScore > 0)
 			{
-				if(AlignmentVec[i].SeedVec.begin()->gPos >= GenomeSize) reverse(cigar_vec.begin(), cigar_vec.end());
-				read.AlnReportArr[i].coor.CIGAR = GenerateCIGAR(cigar_vec);
-				//if (read.AlnReportArr[i].coor.CIGAR == "") read.AlnReportArr[i].AlnScore = 0;
-			}
-			if (read.AlnReportArr[i].AlnScore > read.score)
-			{
-				read.iBestAlnCanIdx = i;
-				read.mis_num = mis_num;
-				read.sub_score = read.score;
-				read.score = read.AlnReportArr[i].AlnScore;
-			}
-			else if (read.AlnReportArr[i].AlnScore == read.score)
-			{
-				read.sub_score = read.score;
-				//if (!bMultiHit && ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].len > ChromosomeVec[read.AlnReportArr[read.iBestAlnCanIdx].coor.ChromosomeIdx].len) read.iBestAlnCanIdx = i;
+				read.AlnReportArr[i].coor = GenCoordinateInfo(bFirstRead, AlignmentVec[i].SeedVec.begin()->gPos, (AlignmentVec[i].SeedVec.rbegin()->gPos + AlignmentVec[i].SeedVec.rbegin()->gLen - 1));
+				if (read.AlnReportArr[i].coor.gPos <= 0) read.AlnReportArr[i].AlnScore = 0;
+				else
+				{
+					if (AlignmentVec[i].SeedVec.begin()->gPos >= GenomeSize) reverse(cigar_vec.begin(), cigar_vec.end());
+					read.AlnReportArr[i].coor.CIGAR = GenerateCIGAR(cigar_vec);
+					//if (CheckSpliceJunctionExistence(cigar_vec)) printf("%s\n", read.AlnReportArr[i].coor.CIGAR.c_str());
+				}
+				if (read.AlnReportArr[i].AlnScore > read.score)
+				{
+					read.iBestAlnCanIdx = i;
+					read.mis_num = mis_num;
+					read.sub_score = read.score;
+					read.score = read.AlnReportArr[i].AlnScore;
+				}
+				else if (read.AlnReportArr[i].AlnScore == read.score)
+				{
+					read.sub_score = read.score;
+					//if (!bMultiHit && ChromosomeVec[read.AlnReportArr[i].coor.ChromosomeIdx].len > ChromosomeVec[read.AlnReportArr[read.iBestAlnCanIdx].coor.ChromosomeIdx].len) read.iBestAlnCanIdx = i;
+				}
 			}
 		}
 	}
