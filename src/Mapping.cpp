@@ -223,7 +223,7 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 		//else gzwrite(gzOutput, buffer, len);
 		//pthread_mutex_unlock(&OutputLock);
 	}
-	else
+	else if (!bUnique || read1.mapq > 3)
 	{
 		if (read1.mapq == Max_MAPQ) myUniqueMapping++;
 
@@ -274,7 +274,7 @@ void OutputPairedAlignments(ReadItem_t& read1, ReadItem_t& read2, int& myUniqueM
 		(void)sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t%s\tAS:i:0\tXS:i:0", read2.header, read2.AlnReportArr[0].iFrag, read2.seq, (FastQFormat ? read2.qual : "*"));
 		SamOutputVec.push_back(buffer);
 	}
-	else
+	else if(!bUnique || read2.mapq > 3)
 	{
 		if (read2.mapq == Max_MAPQ) myUniqueMapping++;
 
@@ -328,7 +328,7 @@ void OutputSingledAlignments(ReadItem_t& read, int& myUniqueMapping, int& myUnMa
 		(void)sprintf(buffer, "%s\t%d\t*\t0\t0\t*\t*\t0\t0\t%s\t%s\tAS:i:0\tXS:i:0", read.header, read.AlnReportArr[0].iFrag, read.seq, (FastQFormat ? read.qual : "*"));
 		SamOutputVec.push_back(buffer);
 	}
-	else
+	else if (!bUnique || read.mapq > 3)
 	{
 		int i, xs_a_idx;
 		char *seq, *rseq;
