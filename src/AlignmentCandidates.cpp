@@ -466,82 +466,111 @@ GappedExtension_t IdentifyBestGappedPartition(char* seq, int rGaps, SeedPair_t& 
 	return GappedExtension;
 }
 
+//void FillGapsBetweenAdjacentSeeds(char* seq, SeedPair_t& left_seed, SeedPair_t& right_seed, vector<SeedPair_t>& Vec)
+//{
+//	int rGaps;
+//	SeedPair_t seed;
+//	pair<int, int> Partition;
+//
+//	seed.bAcceptorSite = false; seed.rLen = seed.gLen = 0;
+//
+//	rGaps = right_seed.rPos - (left_seed.rPos + left_seed.rLen);
+//	//if (bDebugMode)
+//	//{
+//	//	printf("\n\nrGaps=%d\n", rGaps);
+//	//	ShowFragmentPair(seq, left_seed); ShowFragmentPair(seq, right_seed);
+//	//}
+//	Partition = IdentifyBestUnGappedPartition(seq, rGaps, left_seed, right_seed);
+//	if (rGaps < 5 || Partition.second >= (int)ceil(rGaps*0.8))
+//	{
+//		// add one or two normal pairs in between
+//		seed.bSimple = false;
+//		if (Partition.first > 0)
+//		{
+//			left_seed.rLen += Partition.first;
+//			left_seed.gLen += Partition.first;
+//			//if (bDebugMode) printf("Case1.1:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", left_seed.rPos, left_seed.rPos + left_seed.rLen - 1, left_seed.rLen, left_seed.gPos, left_seed.gPos + left_seed.gLen - 1, left_seed.gLen, left_seed.PosDiff);
+//		}
+//		if ((rGaps -= Partition.first) > 0)
+//		{
+//			right_seed.rPos -= rGaps; right_seed.rLen += rGaps;
+//			right_seed.gPos -= rGaps; right_seed.gLen += rGaps;
+//			//if (bDebugMode) printf("Case1.2:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", right_seed.rPos, right_seed.rPos + right_seed.rLen - 1, right_seed.rLen, right_seed.gPos, right_seed.gPos + right_seed.gLen - 1, right_seed.gLen, right_seed.PosDiff);
+//		}
+//	}
+//	else
+//	{
+//		GappedExtension_t GappedExtension = IdentifyBestGappedPartition(seq, rGaps, left_seed, right_seed);
+//		// add one or two normal pairs in between
+//		seed.bSimple = false;
+//		//if (bDebugMode) printf("Case result: GappedExtension.p=%d, left_ext=%d, right_ext=%d\n", GappedExtension.p, GappedExtension.left_ext, GappedExtension.right_ext);
+//		if (GappedExtension.p > 0)
+//		{
+//			if (GappedExtension.p == GappedExtension.right_ext)
+//			{
+//				left_seed.rLen += GappedExtension.p;
+//				left_seed.gLen += GappedExtension.p;
+//				//if (bDebugMode) printf("Case2.1:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", left_seed.rPos, left_seed.rPos + left_seed.rLen - 1, left_seed.rLen, left_seed.gPos, left_seed.gPos + left_seed.gLen - 1, left_seed.gLen, left_seed.PosDiff);
+//			}
+//			else
+//			{
+//				seed.rPos = left_seed.rPos + left_seed.rLen;
+//				seed.gPos = left_seed.gPos + left_seed.gLen;
+//				seed.PosDiff = seed.gPos - seed.rPos;
+//				seed.rLen = GappedExtension.p;
+//				seed.gLen = GappedExtension.right_ext;
+//				Vec.push_back(seed);
+//				//if (bDebugMode) printf("Case2.1 normal pairs between exons:\nr[%d-%d]=%d, g[%lld-%lld]=%d\n", seed.rPos, seed.rPos + seed.rLen - 1, seed.rLen, seed.gPos, seed.gPos + seed.gLen - 1, seed.gLen);
+//			}
+//		}
+//		if ((rGaps -= GappedExtension.p) > 0)
+//		{
+//			if (rGaps == GappedExtension.left_ext)
+//			{
+//				right_seed.rPos -= rGaps; right_seed.rLen += rGaps;
+//				right_seed.gPos -= rGaps; right_seed.gLen += rGaps;
+//				//if (bDebugMode) printf("Case2_2:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", right_seed.rPos, right_seed.rPos + right_seed.rLen - 1, right_seed.rLen, right_seed.gPos, right_seed.gPos + right_seed.gLen - 1, right_seed.gLen, right_seed.PosDiff);
+//			}
+//			else
+//			{
+//				seed.rLen = rGaps;
+//				seed.gLen = GappedExtension.left_ext;
+//				seed.rPos = right_seed.rPos - seed.rLen;
+//				seed.gPos = right_seed.gPos - seed.gLen;
+//				seed.PosDiff = seed.gPos - seed.rPos;
+//				Vec.push_back(seed);
+//				//if (bDebugMode) printf("Case2_2 normal pairs between exons:\nr[%d-%d]=%d, g[%lld-%lld]=%d\n", seed.rPos, seed.rPos + seed.rLen - 1, seed.rLen, seed.gPos, seed.gPos + seed.gLen - 1, seed.gLen);
+//			}
+//		}
+//	}
+//}
 void FillGapsBetweenAdjacentSeeds(char* seq, SeedPair_t& left_seed, SeedPair_t& right_seed, vector<SeedPair_t>& Vec)
 {
 	int rGaps;
 	SeedPair_t seed;
 	pair<int, int> Partition;
 
-	seed.bAcceptorSite = false; seed.rLen = seed.gLen = 0;
-
+	seed.bAcceptorSite = false; seed.rLen = seed.gLen = 0; seed.bSimple = false;
 	rGaps = right_seed.rPos - (left_seed.rPos + left_seed.rLen);
-	//if (bDebugMode)
-	//{
-	//	printf("\n\nrGaps=%d\n", rGaps);
-	//	ShowFragmentPair(seq, left_seed); ShowFragmentPair(seq, right_seed);
-	//}
-	Partition = IdentifyBestUnGappedPartition(seq, rGaps, left_seed, right_seed);
-	if (rGaps < 5 || Partition.second >= (int)ceil(rGaps*0.8))
+	GappedExtension_t GappedExtension = IdentifyBestGappedPartition(seq, rGaps, left_seed, right_seed);
+	//if (bDebugMode) printf("Case result: GappedExtension.p=%d, left_ext=%d, right_ext=%d\n", GappedExtension.p, GappedExtension.left_ext, GappedExtension.right_ext);
+	if (GappedExtension.p > 0)
 	{
-		// add one or two normal pairs in between
-		seed.bSimple = false;
-		if (Partition.first > 0)
-		{
-			left_seed.rLen += Partition.first;
-			left_seed.gLen += Partition.first;
-			//if (bDebugMode) printf("Case1.1:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", left_seed.rPos, left_seed.rPos + left_seed.rLen - 1, left_seed.rLen, left_seed.gPos, left_seed.gPos + left_seed.gLen - 1, left_seed.gLen, left_seed.PosDiff);
-		}
-		if ((rGaps -= Partition.first) > 0)
-		{
-			right_seed.rPos -= rGaps; right_seed.rLen += rGaps;
-			right_seed.gPos -= rGaps; right_seed.gLen += rGaps;
-			//if (bDebugMode) printf("Case1.2:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", right_seed.rPos, right_seed.rPos + right_seed.rLen - 1, right_seed.rLen, right_seed.gPos, right_seed.gPos + right_seed.gLen - 1, right_seed.gLen, right_seed.PosDiff);
-		}
+		seed.rPos = left_seed.rPos + left_seed.rLen;
+		seed.gPos = left_seed.gPos + left_seed.gLen;
+		seed.PosDiff = seed.gPos - seed.rPos;
+		seed.rLen = GappedExtension.p;
+		seed.gLen = GappedExtension.right_ext;
+		Vec.push_back(seed);
 	}
-	else
+	if ((rGaps -= GappedExtension.p) > 0)
 	{
-		GappedExtension_t GappedExtension = IdentifyBestGappedPartition(seq, rGaps, left_seed, right_seed);
-		// add one or two normal pairs in between
-		seed.bSimple = false;
-		//if (bDebugMode) printf("Case result: GappedExtension.p=%d, left_ext=%d, right_ext=%d\n", GappedExtension.p, GappedExtension.left_ext, GappedExtension.right_ext);
-		if (GappedExtension.p > 0)
-		{
-			if (GappedExtension.p == GappedExtension.right_ext)
-			{
-				left_seed.rLen += GappedExtension.p;
-				left_seed.gLen += GappedExtension.p;
-				//if (bDebugMode) printf("Case2.1:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", left_seed.rPos, left_seed.rPos + left_seed.rLen - 1, left_seed.rLen, left_seed.gPos, left_seed.gPos + left_seed.gLen - 1, left_seed.gLen, left_seed.PosDiff);
-			}
-			else
-			{
-				seed.rPos = left_seed.rPos + left_seed.rLen;
-				seed.gPos = left_seed.gPos + left_seed.gLen;
-				seed.PosDiff = seed.gPos - seed.rPos;
-				seed.rLen = GappedExtension.p;
-				seed.gLen = GappedExtension.right_ext;
-				Vec.push_back(seed);
-				//if (bDebugMode) printf("Case2.1 normal pairs between exons:\nr[%d-%d]=%d, g[%lld-%lld]=%d\n", seed.rPos, seed.rPos + seed.rLen - 1, seed.rLen, seed.gPos, seed.gPos + seed.gLen - 1, seed.gLen);
-			}
-		}
-		if ((rGaps -= GappedExtension.p) > 0)
-		{
-			if (rGaps == GappedExtension.left_ext)
-			{
-				right_seed.rPos -= rGaps; right_seed.rLen += rGaps;
-				right_seed.gPos -= rGaps; right_seed.gLen += rGaps;
-				//if (bDebugMode) printf("Case2_2:\nr[%d-%d]=%d, g[%lld-%lld]=%d, PosDiff=%d\n", right_seed.rPos, right_seed.rPos + right_seed.rLen - 1, right_seed.rLen, right_seed.gPos, right_seed.gPos + right_seed.gLen - 1, right_seed.gLen, right_seed.PosDiff);
-			}
-			else
-			{
-				seed.rLen = rGaps;
-				seed.gLen = GappedExtension.left_ext;
-				seed.rPos = right_seed.rPos - seed.rLen;
-				seed.gPos = right_seed.gPos - seed.gLen;
-				seed.PosDiff = seed.gPos - seed.rPos;
-				Vec.push_back(seed);
-				//if (bDebugMode) printf("Case2_2 normal pairs between exons:\nr[%d-%d]=%d, g[%lld-%lld]=%d\n", seed.rPos, seed.rPos + seed.rLen - 1, seed.rLen, seed.gPos, seed.gPos + seed.gLen - 1, seed.gLen);
-			}
-		}
+		seed.rLen = rGaps;
+		seed.gLen = GappedExtension.left_ext;
+		seed.rPos = right_seed.rPos - seed.rLen;
+		seed.gPos = right_seed.gPos - seed.gLen;
+		seed.PosDiff = seed.gPos - seed.rPos;
+		Vec.push_back(seed);
 	}
 }
 
